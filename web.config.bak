@@ -1,0 +1,185 @@
+<?xml version="1.0" encoding="utf-8"?>
+<configuration>
+  <system.webServer>
+    <!-- IIS Node configuration for running Node.js apps -->
+    <handlers>
+      <add name="iisnode" path="server.js" verb="*" modules="iisnode" />
+    </handlers>
+    
+    <!-- URL Rewrite rules to route all requests to Node.js -->
+    <rewrite>
+      <rules>
+        <!-- WebSocket (Socket.io) to Node -->
+        <rule name="WebSocketSupport" stopProcessing="true">
+          <match url="^socket\.io/.*" />
+          <action type="Rewrite" url="server.js" />
+        </rule>
+
+        <!-- API to Node (must come before static rewrite) -->
+        <rule name="ApiToNode" stopProcessing="true">
+          <match url="^api/.*" />
+          <action type="Rewrite" url="server.js" />
+        </rule>
+
+        <!-- Rewrite non-file static requests to build assets -->
+        <rule name="BuildStatic" stopProcessing="true">
+          <match url="^(.*)$" />
+          <conditions>
+            <add input="{REQUEST_FILENAME}" matchType="IsFile" negate="true" />
+            <add input="{REQUEST_URI}" pattern="^/build/" negate="true" />
+            <add input="{REQUEST_URI}" pattern="^/api/" negate="true" />
+            <add input="{REQUEST_URI}" pattern="^/socket\.io/" negate="true" />
+          </conditions>
+          <action type="Rewrite" url="build{REQUEST_URI}" />
+        </rule>
+
+        <!-- SPA fallback to build/index.html for client-side routing -->
+        <rule name="SpaFallback" stopProcessing="true">
+          <match url="(.*)" />
+          <conditions>
+            <add input="{REQUEST_FILENAME}" matchType="IsFile" negate="true" />
+            <add input="{REQUEST_URI}" pattern="^/api/" negate="true" />
+            <add input="{REQUEST_URI}" pattern="^/socket\.io/" negate="true" />
+            <add input="{REQUEST_URI}" pattern="^/build/.*" negate="true" />
+          </conditions>
+          <action type="Rewrite" url="build/index.html" />
+        </rule>
+      </rules>
+    </rewrite>
+    
+    <!-- Security headers for HIPAA compliance -->
+    <httpProtocol>
+      <customHeaders>
+        <remove name="X-Powered-By" />
+        <add name="X-Frame-Options" value="DENY" />
+        <add name="X-XSS-Protection" value="1; mode=block" />
+        <add name="X-Content-Type-Options" value="nosniff" />
+        <add name="Strict-Transport-Security" value="max-age=31536000; includeSubDomains; preload" />
+        <add name="Content-Security-Policy" value="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self'; connect-src 'self' wss: https:;" />
+        <add name="Referrer-Policy" value="strict-origin-when-cross-origin" />
+      </customHeaders>
+    </httpProtocol>
+    
+    <!-- Configure IIS Node -->
+    <iisnode 
+      node_env="production"
+      nodeProcessCountPerApplication="1"
+      maxConcurrentRequestsPerProcess="1024"
+      maxNamedPipeConnectionRetry="100"
+      namedPipeConnectionRetryDelay="250"
+      maxNamedPipeConnectionPoolSize="512"
+      maxNamedPipePooledConnectionAge="30000"
+      asyncCompletionThreadCount="0"
+      initialRequestBufferSize="4096"
+      maxRequestBufferSize="65536"
+      watchedFiles="*.js;*.json"
+      uncFileChangesPollingInterval="5000"
+      gracefulShutdownTimeout="60000"
+      loggingEnabled="true"
+      logDirectory="logs"
+      debuggingEnabled="false"
+      debuggerPortRange="5058-6058"
+      debuggerPathSegment="debug"
+      maxLogFileSizeInKB="128"
+      maxTotalLogFileSizeInKB="1024"
+      maxLogFiles="20"
+      devErrorsEnabled="false"
+      flushResponse="false"
+      enableXFF="true"
+      promoteServerVars="AUTH_USER,AUTH_TYPE,LOGON_USER,HTTPS,REMOTE_ADDR"
+      configOverrides="server.yml" />
+    
+    <!-- WebSocket support -->
+    <webSocket enabled="true" />
+    
+    <!-- MIME types for PWA -->
+    <staticContent>
+      <remove fileExtension=".json" />
+      <mimeMap fileExtension=".json" mimeType="application/json" />
+      <remove fileExtension=".webmanifest" />
+      <mimeMap fileExtension=".webmanifest" mimeType="application/manifest+json" />
+      <remove fileExtension=".woff" />
+      <mimeMap fileExtension=".woff" mimeType="font/woff" />
+      <remove fileExtension=".woff2" />
+      <mimeMap fileExtension=".woff2" mimeType="font/woff2" />
+    </staticContent>
+    
+    <!-- Compression for better performance -->
+    <urlCompression doStaticCompression="true" doDynamicCompression="true">
+      <dynamicTypes>
+        <clear />
+        <add enabled="true" mimeType="text/*" />
+        <add enabled="true" mimeType="message/*" />
+        <add enabled="true" mimeType="application/javascript" />
+        <add enabled="true" mimeType="application/json" />
+        <add enabled="true" mimeType="application/xml" />
+        <add enabled="false" mimeType="*/*" />
+      </dynamicTypes>
+      <staticTypes>
+        <clear />
+        <add enabled="true" mimeType="text/*" />
+        <add enabled="true" mimeType="message/*" />
+        <add enabled="true" mimeType="application/javascript" />
+        <add enabled="true" mimeType="application/json" />
+        <add enabled="true" mimeType="application/xml" />
+        <add enabled="false" mimeType="*/*" />
+      </staticTypes>
+    </urlCompression>
+    
+    <!-- Security settings -->
+    <security>
+      <requestFiltering removeServerHeader="true">
+        <!-- Maximum allowed content length (10MB) -->
+        <requestLimits maxAllowedContentLength="10485760" />
+        <!-- Block dangerous file extensions -->
+        <fileExtensions>
+          <add fileExtension=".exe" allowed="false" />
+          <add fileExtension=".dll" allowed="false" />
+          <add fileExtension=".bat" allowed="false" />
+          <add fileExtension=".cmd" allowed="false" />
+          <add fileExtension=".com" allowed="false" />
+          <add fileExtension=".config" allowed="false" />
+        </fileExtensions>
+        <!-- Hide sensitive directories -->
+        <hiddenSegments>
+          <add segment="node_modules" />
+          <add segment=".git" />
+          <add segment=".env" />
+          <add segment="logs" />
+        </hiddenSegments>
+      </requestFiltering>
+    </security>
+    
+    <!-- Default document for SPA -->
+    <defaultDocument>
+      <files>
+        <clear />
+        <add value="index.html" />
+      </files>
+    </defaultDocument>
+    
+    <!-- Directory browsing disabled for security -->
+    <directoryBrowse enabled="false" />
+    
+    <!-- Error pages -->
+    <httpErrors errorMode="DetailedLocalOnly" existingResponse="PassThrough">
+      <remove statusCode="404" />
+      <error statusCode="404" path="/404.html" responseMode="ExecuteURL" />
+      <remove statusCode="500" />
+      <error statusCode="500" path="/500.html" responseMode="ExecuteURL" />
+    </httpErrors>
+  </system.webServer>
+  
+  <!-- Application settings -->
+  <appSettings>
+    <add key="NODE_ENV" value="production" />
+    <add key="PORT" value="%PORT%" />
+  </appSettings>
+  
+  <!-- Connection strings (backup for environment variables) -->
+  <connectionStrings>
+    <add name="HospitalScheduler" 
+         connectionString="Data Source=.\SQLEXPRESS;Initial Catalog=HospitalScheduler;Integrated Security=True;TrustServerCertificate=True" 
+         providerName="System.Data.SqlClient" />
+  </connectionStrings>
+</configuration>

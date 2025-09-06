@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#2563eb" />
+    <title>Hospital Shift Scheduler</title>
+    
+      <script>(function(){ try{ 
+        // Prefer IIS reverse proxy when app is hosted under /scheduler
+        if (!window.__API_BASE__) {
+          if (location.hostname === 'localhost') { window.__API_BASE__ = 'http://localhost:3001'; } else { window.__API_BASE__ = '/api'; }
+        }
+        // Use BrowserRouter by default now that URL Rewrite is installed
+        window.__USE_HASH_ROUTER__ = false;
+      }catch(e){} })();</script>
+  </head>
+  <body>
+    <noscript>You need to enable JavaScript to run this app.</noscript>
+    <div id="root"></div>
+  </body>
+  </html>
+
+
+
