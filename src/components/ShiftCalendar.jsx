@@ -310,6 +310,55 @@ const ShiftCalendar = ({
     );
   };
 
+  // Helpers for day timeline
+  const toMinutes = (t) => {
+    if (!t) return 0;
+    if (typeof t === 'string' && t.includes('T')) {
+      const d = new Date(t);
+      return d.getHours() * 60 + d.getMinutes();
+    }
+    const val = String(t);
+    const [hh, mm] = (val || '00:00:00').split(':');
+    return (parseInt(hh, 10) || 0) * 60 + (parseInt(mm, 10) || 0);
+  };
+
+  const renderDayTimeline = (day) => {
+    const HEIGHT = 480; // px
+    const hours = Array.from({ length: 24 }, (_, i) => i);
+    const dayKey = format(day, 'yyyy-MM-dd');
+    const dayShifts = shiftsByDay[dayKey] || [];
+    return (
+      <Box sx={{ position: 'relative', height: { xs: 380, sm: HEIGHT }, border: '1px solid', borderColor: 'divider', borderRadius: 1, overflow: 'hidden', bgcolor: 'background.paper' }}>
+        {/* Hour grid */}
+        {hours.map((h, i) => (
+          <Box key={h} sx={{ position: 'absolute', top: (HEIGHT/24) * i, left: 0, right: 0, height: 1, bgcolor: 'action.hover', opacity: 0.35 }} />
+        ))}
+        {/* Hour labels (left) */}
+        {hours.map((h, i) => (
+          <Typography key={`lbl-${h}`} variant="caption" sx={{ position: 'absolute', top: (HEIGHT/24) * i + 2, left: 6, color: 'text.disabled' }}>
+            {String(h).padStart(2, '0')}:00
+          </Typography>
+        ))}
+        {/* Shifts */}
+        {dayShifts.map((s, idx) => {
+          const start = toMinutes(s.start_time || s.startTime || s.start_datetime || s.start);
+          const end = toMinutes(s.end_time || s.endTime || s.end_datetime || s.end);
+          const duration = Math.max(30, (end || 0) - (start || 0));
+          const top = (HEIGHT / 1440) * start;
+          const height = Math.max(10, (HEIGHT / 1440) * duration);
+          const type = s.type || getShiftType(s.start_time || s.startTime || s.start_datetime || s.start);
+          return (
+            <Box key={idx} sx={{ position: 'absolute', left: { xs: 72, sm: 84 }, right: 8, top, height, bgcolor: SHIFT_COLORS[type] || 'primary.main', color: 'white', borderRadius: 1, boxShadow: 1, px: 1, py: 0.5, overflow: 'hidden' }} onClick={(e) => { e.stopPropagation(); onShiftClick?.(s); }}>
+              <Typography variant="caption" noWrap>
+                {(s.department || s.department_name || s.department_id || 'Shift')}: {String(s.start_time || s.startTime).slice(0,5)} - {String(s.end_time || s.endTime).slice(0,5)}
+              </Typography>
+            </Box>
+          );
+        })}
+      </Box>
+    );
+  };
+
   return (
     <Box sx={{ 
       height: '100%',
@@ -410,46 +459,48 @@ const ShiftCalendar = ({
         </Box>
       </Box>
 
-      {/* Calendar Grid */}
-      <Box sx={{ 
-        flex: 1, 
-        overflow: 'auto',
-        minHeight: 0,
-        maxHeight: { xs: 350, sm: 450, lg: 500 }
-      }}>
-        {/* Day Headers */}
-        <Grid container spacing={0.5} sx={{ mb: 1 }}>
-          {(
-            view === 'day'
-              ? [format(currentDate, isMobile ? 'EE' : 'EEEE')]
-              : ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
-          ).map((day, idx) => (
-            <Grid item xs={view === 'day' ? 12 : 12 / 7} key={idx}>
-              <Typography
-                variant="caption"
-                sx={{
-                  textAlign: 'center',
-                  display: 'block',
-                  fontWeight: 'bold',
-                  color: 'text.secondary',
-                  fontSize: { xs: '0.65rem', sm: '0.75rem' }
-                }}
-              >
-                {day}
-              </Typography>
-            </Grid>
-          ))}
-        </Grid>
+      {/* Calendar Grid or Day Timeline */}
+      {view === 'day' ? (
+        <Box sx={{ flex: 1, minHeight: 0 }}>
+          {renderDayTimeline(currentDate)}
+        </Box>
+      ) : (
+        <Box sx={{ 
+          flex: 1, 
+          overflow: 'auto',
+          minHeight: 0,
+          maxHeight: { xs: 350, sm: 450, lg: 500 }
+        }}>
+          {/* Day Headers */}
+          <Grid container spacing={0.5} sx={{ mb: 1 }}>
+            {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
+              <Grid item xs={12 / 7} key={day}>
+                <Typography
+                  variant="caption"
+                  sx={{
+                    textAlign: 'center',
+                    display: 'block',
+                    fontWeight: 'bold',
+                    color: 'text.secondary',
+                    fontSize: { xs: '0.65rem', sm: '0.75rem' }
+                  }}
+                >
+                  {isMobile ? day.charAt(0) : day}
+                </Typography>
+              </Grid>
+            ))}
+          </Grid>
 
-        {/* Calendar Days */}
-        <Grid container spacing={0.5}>
-          {daysInView.map((day, idx) => (
-            <Grid item xs={view === 'day' ? 12 : 12 / 7} key={idx}>
-              {renderDayContent(day)}
-            </Grid>
-          ))}
-        </Grid>
-      </Box>
+          {/* Calendar Days */}
+          <Grid container spacing={0.5}>
+            {daysInView.map((day, idx) => (
+              <Grid item xs={12 / 7} key={idx}>
+                {renderDayContent(day)}
+              </Grid>
+            ))}
+          </Grid>
+        </Box>
+      )}
 
       {/* Legend */}
       {showLegend && !isMobile && (
