@@ -566,11 +566,19 @@ app.get('/api/dashboard/metrics', googleAuth.softAuthenticate(), async (req, res
         alerts: []
       });
     }
-    // Minimal live metrics from DB
+    // Try cached metrics first (short TTL)
+    const cached = await cacheService.get('metrics', { type: 'dashboard_soft', id: 'global' }).catch(() => null);
+    if (cached) {
+      return res.json({ metrics: cached, userStats: {}, alerts: [] });
+    }
+    // Minimal live metrics from DB if not cached
     const today = new Date().toISOString().slice(0,10);
     const openCount = await repositories.shifts.count({ status: 'open' }).catch(() => 0);
     const todayCount = await repositories.shifts.count({ shift_date: today }).catch(() => 0);
-    return res.json({ metrics: { shiftsToday: todayCount, openShifts: openCount, staffOnDuty: 0, fillRate: 0, avgResponseTime: 0, overtimeHours: 0, fatigueAlerts: 0, upcomingShifts: [] }, userStats: {}, alerts: [] });
+    const metrics = { shiftsToday: todayCount, openShifts: openCount, staffOnDuty: 0, fillRate: 0, avgResponseTime: 0, overtimeHours: 0, fatigueAlerts: 0, upcomingShifts: [] };
+    // Cache for 60 seconds
+    await cacheService.set('metrics', { type: 'dashboard_soft', id: 'global' }, metrics, { ttl: 60 }).catch(() => {});
+    return res.json({ metrics, userStats: {}, alerts: [] });
   } catch (e) {
     // Graceful fallback if DB not reachable
     return res.json({
