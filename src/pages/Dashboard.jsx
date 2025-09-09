@@ -28,7 +28,6 @@ import { format } from 'date-fns';
 import { apiFetch, apiWithRetry } from '../utils/apiWithErrorHandling';
 import StandardButton from '../components/common/StandardButton';
 import { LoadingSpinner } from '../components/common/LoadingState';
-import { ErrorMessage } from '../components/common/ErrorState';
 import { useSocket } from '../contexts/SocketContext';
 import { useNotification } from '../contexts/NotificationContext';
 import MetricCard, { StaffMetricCard, ShiftMetricCard, ResponseMetricCard } from '../components/MetricCard';
@@ -167,17 +166,14 @@ const Dashboard = () => {
     return <LoadingSpinner message="Loading dashboard..." />;
   }
 
-  if (error) {
-    return (
-      <Box sx={{ p: 3 }}>
-        <ErrorMessage
-          title="Unable to load dashboard"
-          message={error}
-          onRetry={fetchDashboardData}
-        />
-      </Box>
-    );
-  }
+  const errorBanner = error ? (
+    <Alert severity="warning" sx={{ mb: 2 }} onClose={() => setError(null)}>
+      Unable to load dashboard data. Showing latest available info.
+      <StandardButton size="small" variant="outlined" sx={{ ml: 2 }} onClick={fetchDashboardData}>
+        Retry
+      </StandardButton>
+    </Alert>
+  ) : null;
 
   return (
     <Box sx={{ 
@@ -186,6 +182,7 @@ const Dashboard = () => {
       overflow: 'visible',
       width: '100%'
     }}>
+      {errorBanner}
       {/* Welcome Section */}
       <Paper sx={{ 
         p: { xs: 2, sm: 3 }, 
@@ -549,7 +546,5 @@ const Dashboard = () => {
 };
 
 export default Dashboard;
-
-
 
 
