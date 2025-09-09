@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useMemo, useState } from 'react';
+﻿import { useEffect, useMemo, useState } from 'react';
 import {
   Box,
   Card,
@@ -15,9 +15,10 @@ import {
   InputAdornment,
   Alert
 } from '@mui/material';
-import { Search as SearchIcon, Person as PersonIcon } from '@mui/icons-material';
-import { LoadingSpinner, CardSkeleton } from '../components/common/LoadingState';
-import { ErrorMessage } from '../components/common/ErrorState';
+import { Search as SearchIcon } from '@mui/icons-material';
+import { CardSkeleton } from '../components/common/LoadingState';
+// import { LoadingSpinner } from '../components/common/LoadingState';
+// import { ErrorMessage } from '../components/common/ErrorState';
 import StandardButton from '../components/common/StandardButton';
 
 const Staff = () => {

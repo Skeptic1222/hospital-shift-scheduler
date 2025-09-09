@@ -2,17 +2,13 @@ import { useState, useMemo } from 'react';
 import {
   Box,
   Typography,
-  Paper,
   IconButton,
   ToggleButton,
   ToggleButtonGroup,
   Chip,
-  Card,
-  CardContent,
   Grid,
   Tooltip,
   Badge,
-  Button,
   Popover,
   List,
   ListItem,
@@ -20,7 +16,7 @@ import {
   ListItemIcon,
   Divider,
   Avatar,
-  AvatarGroup
+  TextField,
 } from '@mui/material';
 import {
   NavigateBefore,
@@ -29,9 +25,6 @@ import {
   ViewWeek as WeekIcon,
   CalendarMonth as MonthIcon,
   Schedule as ScheduleIcon,
-  Person as PersonIcon,
-  LocationOn as LocationIcon,
-  AccessTime as TimeIcon,
   Warning as WarningIcon,
   CheckCircle as CheckIcon,
   Circle as CircleIcon,
@@ -44,7 +37,6 @@ import {
   startOfMonth,
   endOfMonth,
   eachDayOfInterval,
-  isSameDay,
   isSameMonth,
   isToday,
   addWeeks,
@@ -53,7 +45,6 @@ import {
   subMonths,
   getDay,
   parseISO,
-  isWithinInterval,
   differenceInHours
 } from 'date-fns';
 import { useResponsive } from '../hooks/useResponsive';
@@ -83,49 +74,53 @@ const ShiftCalendar = ({
   onAddShift,
   selectedDate = new Date(),
   view: propView,
-  height = 600,
+  // height = 600,
   showLegend = true,
   interactive = true,
   currentUserId
 }) => {
   const [view, setView] = useState(propView || 'week');
   const [currentDate, setCurrentDate] = useState(selectedDate);
+  const [focusDate, setFocusDate] = useState(null);
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedDayShifts, setSelectedDayShifts] = useState([]);
   const { isMobile } = useResponsive();
 
   // Calculate date range based on view
   const dateRange = useMemo(() => {
+    if (view === 'day') {
+      // Single-day range (start/end same day)
+      const start = new Date(currentDate);
+      start.setHours(0, 0, 0, 0);
+      const end = new Date(currentDate);
+      end.setHours(23, 59, 59, 999);
+      return { start, end };
+    }
     if (view === 'week') {
       return {
         start: startOfWeek(currentDate, { weekStartsOn: 0 }),
         end: endOfWeek(currentDate, { weekStartsOn: 0 })
       };
-    } else {
-      return {
-        start: startOfMonth(currentDate),
-        end: endOfMonth(currentDate)
-      };
     }
+    // month
+    return {
+      start: startOfMonth(currentDate),
+      end: endOfMonth(currentDate)
+    };
   }, [view, currentDate]);
 
   // Get all days in the current view
   const daysInView = useMemo(() => {
     const days = eachDayOfInterval(dateRange);
-    
-    // For month view, add padding days to complete weeks
     if (view === 'month') {
       const firstDay = days[0];
       const startPadding = getDay(firstDay);
       const paddingDays = [];
-      
       for (let i = startPadding - 1; i >= 0; i--) {
         paddingDays.push(new Date(firstDay.getTime() - (i + 1) * 24 * 60 * 60 * 1000));
       }
-      
       return [...paddingDays, ...days];
     }
-    
     return days;
   }, [dateRange, view]);
 
@@ -165,6 +160,7 @@ const ShiftCalendar = ({
   const handleDayClick = (day, event) => {
     const dayKey = format(day, 'yyyy-MM-dd');
     const dayShifts = shiftsByDay[dayKey] || [];
+    setFocusDate(day);
     
     if (dayShifts.length > 0) {
       setSelectedDayShifts(dayShifts);
@@ -177,6 +173,7 @@ const ShiftCalendar = ({
   const handleClosePopover = () => {
     setAnchorEl(null);
     setSelectedDayShifts([]);
+    setFocusDate(null);
   };
 
   const renderShiftBadge = (day) => {
@@ -208,19 +205,29 @@ const ShiftCalendar = ({
     const dayKey = format(day, 'yyyy-MM-dd');
     const dayShifts = shiftsByDay[dayKey] || [];
     const isCurrentMonth = isSameMonth(day, currentDate);
+    // Coverage aggregates
+    const agg = dayShifts.reduce((acc, s) => {
+      const req = s.required_staff || s.requiredStaff || 1;
+      const asg = (s.assigned_staff && s.assigned_staff.length) || s.assignedCount || 0;
+      acc.required += Number(req) || 0;
+      acc.assigned += Number(asg) || 0;
+      return acc;
+    }, { required: 0, assigned: 0 });
+    const coverageRatio = agg.required > 0 ? Math.min(1, agg.assigned / agg.required) : 0;
     
     return (
       <Box
         sx={{
           position: 'relative',
-          height: view === 'week' ? { xs: 60, sm: 80, lg: 100 } : { xs: 50, sm: 65, lg: 75 },
+          height: view !== 'month' ? { xs: 60, sm: 80, lg: 100 } : { xs: 50, sm: 65, lg: 75 },
           p: { xs: 0.5, sm: 1 },
-          bgcolor: isToday(day) ? 'action.hover' : 'background.paper',
+          bgcolor: isToday(day) ? 'action.hover' : (view === 'month' && agg.required > 0 ? `rgba(16,185,129,${0.12 + 0.28*coverageRatio})` : 'background.paper'),
           opacity: isCurrentMonth ? 1 : 0.5,
           cursor: interactive ? 'pointer' : 'default',
           borderRadius: 0.5,
           border: '1px solid',
-          borderColor: 'divider',
+          borderColor: (focusDate && format(focusDate, 'yyyy-MM-dd') === dayKey) ? 'primary.main' : 'divider',
+          boxShadow: (focusDate && format(focusDate, 'yyyy-MM-dd') === dayKey) ? '0 0 0 2px rgba(37,99,235,0.2)' : 'none',
           transition: 'all 0.2s ease',
           '&:hover': interactive ? {
             bgcolor: 'action.hover',
@@ -239,12 +246,20 @@ const ShiftCalendar = ({
             lineHeight: 1.2
           }}
         >
-          {format(day, view === 'week' ? 'EEE d' : 'd')}
+          {format(day, view !== 'month' ? 'EEE d' : 'd')}
         </Typography>
+        {agg.required > 0 && (
+          <Chip
+            size="small"
+            label={`${agg.assigned}/${agg.required}`}
+            color={agg.assigned >= agg.required ? 'success' : (agg.assigned > 0 ? 'warning' : 'default')}
+            sx={{ position: 'absolute', top: 2, right: 2 }}
+          />
+        )}
         
         {renderShiftBadge(day)}
         
-        {view === 'week' && dayShifts.length > 0 && (
+        {(view !== 'month') && dayShifts.length > 0 && (
           <Box sx={{ overflow: 'hidden' }}>
             {dayShifts.slice(0, 1).map((shift, idx) => (
               <Box
@@ -316,9 +331,11 @@ const ShiftCalendar = ({
             <NavigateBefore />
           </IconButton>
           <Typography variant="h6" sx={{ minWidth: 150, textAlign: 'center' }}>
-            {view === 'week'
-              ? `Week of ${format(dateRange.start, 'MMM d')}`
-              : format(currentDate, 'MMMM yyyy')}
+            {view === 'day'
+              ? format(currentDate, 'MMM d, yyyy')
+              : view === 'week'
+                ? `Week of ${format(dateRange.start, 'MMM d')}`
+                : format(currentDate, 'MMMM yyyy')}
           </Typography>
           <IconButton onClick={() => handleNavigate('next')}>
             <NavigateNext />
@@ -330,7 +347,15 @@ const ShiftCalendar = ({
             size="small"
             variant="outlined"
             startIcon={<TodayIcon />}
-            onClick={() => setCurrentDate(new Date())}
+            onClick={(e) => {
+              // prevent any parent click handlers from firing
+              if (e && typeof e.preventDefault === 'function') e.preventDefault();
+              if (e && typeof e.stopPropagation === 'function') e.stopPropagation();
+              const now = new Date();
+              // Ensure day view and jump to current day without navigation
+              setView('day');
+              setCurrentDate(now);
+            }}
           >
             Today
           </StandardButton>
@@ -352,6 +377,24 @@ const ShiftCalendar = ({
               </ToggleButton>
             </ToggleButtonGroup>
           )}
+          <TextField
+            type="date"
+            size="small"
+            value={format(currentDate, 'yyyy-MM-dd')}
+            onChange={(e) => {
+              const d = new Date(e.target.value + 'T00:00:00');
+              if (!isNaN(d)) { setView('day'); setCurrentDate(d); }
+            }}
+            sx={{ ml: 1, minWidth: 140 }}
+          />
+          <StandardButton
+            size="small"
+            variant="outlined"
+            onClick={() => { const now = new Date(); setView('day'); setCurrentDate(now); }}
+            sx={{ display: format(currentDate, 'yyyy-MM-dd') !== format(new Date(), 'yyyy-MM-dd') ? 'inline-flex' : 'none' }}
+          >
+            Back to Today
+          </StandardButton>
           
           {onAddShift && (
             <StandardButton
@@ -376,8 +419,12 @@ const ShiftCalendar = ({
       }}>
         {/* Day Headers */}
         <Grid container spacing={0.5} sx={{ mb: 1 }}>
-          {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
-            <Grid item xs={12 / 7} key={day}>
+          {(
+            view === 'day'
+              ? [format(currentDate, isMobile ? 'EE' : 'EEEE')]
+              : ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+          ).map((day, idx) => (
+            <Grid item xs={view === 'day' ? 12 : 12 / 7} key={idx}>
               <Typography
                 variant="caption"
                 sx={{
@@ -388,7 +435,7 @@ const ShiftCalendar = ({
                   fontSize: { xs: '0.65rem', sm: '0.75rem' }
                 }}
               >
-                {isMobile ? day.charAt(0) : day}
+                {day}
               </Typography>
             </Grid>
           ))}
@@ -397,7 +444,7 @@ const ShiftCalendar = ({
         {/* Calendar Days */}
         <Grid container spacing={0.5}>
           {daysInView.map((day, idx) => (
-            <Grid item xs={12 / 7} key={idx}>
+            <Grid item xs={view === 'day' ? 12 : 12 / 7} key={idx}>
               {renderDayContent(day)}
             </Grid>
           ))}

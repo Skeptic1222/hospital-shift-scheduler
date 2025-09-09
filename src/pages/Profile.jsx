@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useState } from 'react';
+﻿import { useEffect, useState } from 'react';
 import { Avatar, Box, Card, CardContent, Grid, TextField, Typography, Chip, Divider, InputAdornment } from '@mui/material';
 import StandardButton from '../components/common/StandardButton';
 import { LoadingSpinner } from '../components/common/LoadingState';
@@ -18,7 +18,7 @@ const Profile = () => {
       const res = await apiFetch('/api/users/profile');
       const data = await res.json();
       setProfile(data);
-    } catch (_) {}
+    } catch (_) { /* ignore */ }
     finally { setLoading(false); }
   }
 

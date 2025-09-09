@@ -9,11 +9,7 @@ import {
   IconButton,
   Tooltip,
   Collapse,
-  List,
-  ListItem,
-  ListItemText,
-  Divider,
-  Chip
+  Divider
 } from '@mui/material';
 import {
   TrendingUp as TrendingUpIcon,
@@ -281,4 +277,3 @@ export const ResponseMetricCard = ({ avgTime, unit = 'min', target, trend }) => 
 };
 
 export default MetricCard;
-

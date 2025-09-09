@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, useCallback } from 'react';
 import {
   Box,
   Card,
@@ -16,8 +16,7 @@ import {
   Paper,
   Divider,
   LinearProgress,
-  IconButton,
-  Tooltip
+  IconButton
 } from '@mui/material';
 import {
   Phone as PhoneIcon,
@@ -31,7 +30,7 @@ import {
   Warning as WarningIcon
 } from '@mui/icons-material';
 import StandardButton from '../components/common/StandardButton';
-import { LoadingSpinner, CardSkeleton } from '../components/common/LoadingState';
+import { CardSkeleton } from '../components/common/LoadingState';
 import { ErrorMessage } from '../components/common/ErrorState';
 import { useResponsive } from '../hooks/useResponsive';
 
@@ -50,7 +49,7 @@ const DEPARTMENTS = [
 ];
 
 const OnCall = () => {
-  const { isMobile } = useResponsive();
+  useResponsive();
   const [view, setView] = useState('day');
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
   const [assignments, setAssignments] = useState({});
@@ -63,31 +62,7 @@ const OnCall = () => {
     loadStaff();
   }, []);
 
-  useEffect(() => {
-    loadAssignments();
-  }, [view, date]);
-
-  async function loadStaff() {
-    try {
-      const { apiFetch } = await import('../utils/api');
-      const res = await apiFetch('/api/staff');
-      const data = await res.json();
-      setStaff(data.staff || []);
-    } catch (err) {
-      console.error('Failed to load staff:', err);
-      // Use demo data
-      setStaff([
-        { id: 1, first_name: 'Dr. Sarah', last_name: 'Johnson', department_code: 'ED', phone: '555-0101', email: 'sarah.j@hospital.com' },
-        { id: 2, first_name: 'Dr. Michael', last_name: 'Chen', department_code: 'ICU', phone: '555-0102', email: 'michael.c@hospital.com' },
-        { id: 3, first_name: 'Dr. Emily', last_name: 'Rodriguez', department_code: 'OR', phone: '555-0103', email: 'emily.r@hospital.com' },
-        { id: 4, first_name: 'Dr. James', last_name: 'Wilson', department_code: 'CathLab', phone: '555-0104', email: 'james.w@hospital.com' },
-        { id: 5, first_name: 'Tech Lisa', last_name: 'Martinez', department_code: 'CT', phone: '555-0105', email: 'lisa.m@hospital.com' },
-        { id: 6, first_name: 'Tech David', last_name: 'Kim', department_code: 'MR', phone: '555-0106', email: 'david.k@hospital.com' }
-      ]);
-    }
-  }
-
-  async function loadAssignments() {
+  const loadAssignments = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -117,7 +92,33 @@ const OnCall = () => {
     } finally {
       setLoading(false);
     }
+  }, [view, date, staff]);
+
+  useEffect(() => {
+    loadAssignments();
+  }, [loadAssignments]);
+
+  async function loadStaff() {
+    try {
+      const { apiFetch } = await import('../utils/api');
+      const res = await apiFetch('/api/staff');
+      const data = await res.json();
+      setStaff(data.staff || []);
+    } catch (err) {
+      console.error('Failed to load staff:', err);
+      // Use demo data
+      setStaff([
+        { id: 1, first_name: 'Dr. Sarah', last_name: 'Johnson', department_code: 'ED', phone: '555-0101', email: 'sarah.j@hospital.com' },
+        { id: 2, first_name: 'Dr. Michael', last_name: 'Chen', department_code: 'ICU', phone: '555-0102', email: 'michael.c@hospital.com' },
+        { id: 3, first_name: 'Dr. Emily', last_name: 'Rodriguez', department_code: 'OR', phone: '555-0103', email: 'emily.r@hospital.com' },
+        { id: 4, first_name: 'Dr. James', last_name: 'Wilson', department_code: 'CathLab', phone: '555-0104', email: 'james.w@hospital.com' },
+        { id: 5, first_name: 'Tech Lisa', last_name: 'Martinez', department_code: 'CT', phone: '555-0105', email: 'lisa.m@hospital.com' },
+        { id: 6, first_name: 'Tech David', last_name: 'Kim', department_code: 'MR', phone: '555-0106', email: 'david.k@hospital.com' }
+      ]);
+    }
   }
+
+  // loadAssignments defined via useCallback below
 
   async function setOnCall(department, userId) {
     try {
@@ -444,4 +445,3 @@ const OnCall = () => {
 };
 
 export default OnCall;
-

@@ -6,7 +6,7 @@ Run from the project root (C:\inetpub\wwwroot\scheduler)
 param(
   [int]$Port = 3001,
   [string]$NodeEnv = 'production',
-  [switch]$SkipExternals = $true,
+  [switch]$SkipExternals = $false,
   [string]$AllowedOrigins = 'https://localhost,https://ay-i-t.com,http://localhost',
   [string]$AdminEmails = '',
   [string]$SupervisorEmails = ''

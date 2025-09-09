@@ -1,4 +1,4 @@
-import React from 'react';
+//
 import { Alert } from '@mui/material';
 
 const OfflineIndicator = () => (
@@ -6,4 +6,3 @@ const OfflineIndicator = () => (
 );
 
 export default OfflineIndicator;
-

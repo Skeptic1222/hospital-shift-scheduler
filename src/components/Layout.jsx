@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   AppBar,
@@ -20,12 +20,10 @@ import {
   Dashboard as DashboardIcon,
   Schedule as ScheduleIcon,
   Queue as QueueIcon,
-  People as PeopleIcon,
-  PhoneInTalk as OnCallIcon,
-  Notifications as NotificationsIcon
+  People as PeopleIcon
 } from '@mui/icons-material';
 import MobileNavigation from './MobileNavigation';
-import StandardButton from './common/StandardButton';
+import ToastStack from './ToastStack';
 
 const Layout = ({ children, user, onLogout }) => {
   const [anchorEl, setAnchorEl] = useState(null);
@@ -67,11 +65,31 @@ const Layout = ({ children, user, onLogout }) => {
               fontSize: { xs: '1.1rem', sm: '1.25rem', md: '1.5rem' },
               whiteSpace: 'nowrap',
               overflow: 'hidden',
-              textOverflow: 'ellipsis'
+              textOverflow: 'ellipsis',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 1
             }}
             onClick={() => navigate('/dashboard')}
           >
-            {isMobile ? 'HSS' : 'Hospital Shift Scheduler'}
+            {isMobile ? 'SW' : 'Shiftwise'}
+            {user?.role === 'admin' && (
+              <Box
+                component="span"
+                sx={{
+                  backgroundColor: '#fbbf24',
+                  color: '#000',
+                  px: 1,
+                  py: 0.5,
+                  borderRadius: 1,
+                  fontSize: '0.75rem',
+                  fontWeight: 600,
+                  display: 'inline-block'
+                }}
+              >
+                ADMIN
+              </Box>
+            )}
           </Typography>
 
           {/* Desktop Navigation Buttons */}
@@ -170,6 +188,9 @@ const Layout = ({ children, user, onLogout }) => {
           notificationCount={0}
         />
       )}
+
+      {/* Global Toasts */}
+      <ToastStack />
     </>
   );
 };

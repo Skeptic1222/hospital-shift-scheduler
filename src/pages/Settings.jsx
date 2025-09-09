@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Box,
   Card,
@@ -13,15 +14,12 @@ import {
   FormControl,
   InputLabel,
   Alert,
-  Chip,
   Paper,
   List,
   ListItem,
   ListItemIcon,
   ListItemText,
   ListItemSecondaryAction,
-  RadioGroup,
-  Radio,
   TextField,
   Snackbar
 } from '@mui/material';
@@ -30,22 +28,23 @@ import {
   Email as EmailIcon,
   Sms as SmsIcon,
   NotificationsActive as PushIcon,
-  DarkMode as DarkModeIcon,
-  Language as LanguageIcon,
   Schedule as ScheduleIcon,
   Security as SecurityIcon,
   Palette as PaletteIcon,
-  VolumeUp as SoundIcon,
-  AccessTime as TimeIcon,
-  CalendarMonth as CalendarIcon,
   Vibration as VibrationIcon,
-  DoNotDisturb as QuietIcon
+  DoNotDisturb as QuietIcon,
+  AdminPanelSettings as AdminIcon
 } from '@mui/icons-material';
 import StandardButton from '../components/common/StandardButton';
-import { LoadingSpinner, CardSkeleton } from '../components/common/LoadingState';
+import { CardSkeleton } from '../components/common/LoadingState';
 import { ErrorMessage } from '../components/common/ErrorState';
+import { currentUserFromToken } from '../utils/auth';
 
 const Settings = () => {
+  const navigate = useNavigate();
+  const user = currentUserFromToken();
+  const isAdmin = user?.role === 'admin';
+  
   const [settings, setSettings] = useState({
     notifications: {
       email: true,
@@ -83,6 +82,9 @@ const Settings = () => {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
   const [successMessage, setSuccessMessage] = useState('');
+  const [wsPref, setWsPref] = useState(() => (typeof window !== 'undefined' ? (localStorage.getItem('socket_transport') || 'polling') : 'polling'));
+  const [adminEmails, setAdminEmails] = useState(() => (typeof window !== 'undefined' ? (localStorage.getItem('admin_emails') || '') : ''));
+  const [supervisorEmails, setSupervisorEmails] = useState(() => (typeof window !== 'undefined' ? (localStorage.getItem('supervisor_emails') || '') : ''));
 
   useEffect(() => {
     loadSettings();
@@ -119,6 +121,10 @@ const Settings = () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(settings)
       });
+      // Persist transport preference locally
+      try { localStorage.setItem('socket_transport', wsPref); } catch(_){ /* ignore */ }
+      try { localStorage.setItem('admin_emails', adminEmails); } catch(_){ /* ignore */ }
+      try { localStorage.setItem('supervisor_emails', supervisorEmails); } catch(_){ /* ignore */ }
       setSuccessMessage('Settings saved successfully');
     } catch (err) {
       setError('Failed to save settings');
@@ -185,6 +191,41 @@ const Settings = () => {
   return (
     <Box sx={{ width: '100%' }}>
       <Typography variant="h5" sx={{ mb: 3 }}>Settings</Typography>
+
+      {/* Admin Quick Access */}
+      {isAdmin && (
+        <Card sx={{ mb: 3, background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' }}>
+          <CardContent>
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                <AdminIcon sx={{ fontSize: 40, color: 'white', mr: 2 }} />
+                <Box>
+                  <Typography variant="h6" sx={{ color: 'white', fontWeight: 600 }}>
+                    Admin Console
+                  </Typography>
+                  <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.9)' }}>
+                    Manage users, roles, and system settings
+                  </Typography>
+                </Box>
+              </Box>
+              <StandardButton
+                variant="contained"
+                onClick={() => navigate('/admin')}
+                sx={{ 
+                  backgroundColor: 'rgba(255,255,255,0.2)',
+                  color: 'white',
+                  '&:hover': {
+                    backgroundColor: 'rgba(255,255,255,0.3)'
+                  }
+                }}
+                startIcon={<AdminIcon />}
+              >
+                Open Admin Console
+              </StandardButton>
+            </Box>
+          </CardContent>
+        </Card>
+      )}
 
       <Grid container spacing={3}>
         {/* Notifications */}
@@ -301,11 +342,11 @@ const Settings = () => {
                   </Box>
                 )}
               </List>
-            </CardContent>
-          </Card>
-        </Grid>
+        </CardContent>
+      </Card>
+    </Grid>
 
-        {/* Display & Accessibility */}
+    {/* Display & Accessibility */}
         <Grid item xs={12} lg={6}>
           <Card>
             <CardContent>
@@ -392,6 +433,65 @@ const Settings = () => {
                   <MenuItem value="America/Los_Angeles">Pacific Time</MenuItem>
                 </Select>
               </FormControl>
+            </CardContent>
+          </Card>
+        </Grid>
+
+        {/* Real-time & Connectivity */}
+        <Grid item xs={12} lg={6}>
+          <Card>
+            <CardContent>
+              <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
+                <ScheduleIcon sx={{ mr: 1, color: 'primary.main' }} />
+                <Typography variant="h6">Real-time Connectivity</Typography>
+              </Box>
+              <List>
+                <ListItem>
+                  <ListItemText
+                    primary="Enable WebSocket upgrade (beta)"
+                    secondary="Uses WebSocket when available; otherwise falls back to long-polling. Refresh required to apply."
+                  />
+                  <ListItemSecondaryAction>
+                    <Switch
+                      checked={wsPref === 'websocket'}
+                      onChange={(e) => setWsPref(e.target.checked ? 'websocket' : 'polling')}
+                    />
+                  </ListItemSecondaryAction>
+                </ListItem>
+              </List>
+            </CardContent>
+          </Card>
+        </Grid>
+
+        {/* Access Control (client-side gating) */}
+        <Grid item xs={12} lg={6}>
+          <Card>
+            <CardContent>
+              <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
+                <AdminIcon sx={{ mr: 1, color: 'primary.main' }} />
+                <Typography variant="h6">Access Control (UI visibility)</Typography>
+              </Box>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                Add comma-separated Google emails to control Admin/Supervisor visibility in the UI. (Server-side access still enforced.)
+              </Typography>
+              <TextField
+                fullWidth
+                label="Admin Emails"
+                placeholder="admin1@example.com, admin2@example.com"
+                value={adminEmails}
+                onChange={(e)=>setAdminEmails(e.target.value)}
+                sx={{ mb: 2 }}
+              />
+              <TextField
+                fullWidth
+                label="Supervisor Emails"
+                placeholder="supervisor1@example.com, supervisor2@example.com"
+                value={supervisorEmails}
+                onChange={(e)=>setSupervisorEmails(e.target.value)}
+              />
+              <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
+                Tip: sop1973@gmail.com is always an admin by default.
+              </Typography>
             </CardContent>
           </Card>
         </Grid>
@@ -571,4 +671,3 @@ const Settings = () => {
 };
 
 export default Settings;
-

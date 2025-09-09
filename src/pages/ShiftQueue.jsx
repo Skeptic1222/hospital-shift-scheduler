@@ -1,14 +1,16 @@
-﻿import React, { useState } from 'react';
-import { Box, Card, CardContent, Grid, TextField, Typography, Chip, LinearProgress, Alert } from '@mui/material';
+﻿import { useState } from 'react';
+import { Box, Card, CardContent, Grid, TextField, Typography, Chip, Alert } from '@mui/material';
 import StandardButton from '../components/common/StandardButton';
 import { LoadingSpinner } from '../components/common/LoadingState';
-import { ErrorMessage } from '../components/common/ErrorState';
+// import { ErrorMessage } from '../components/common/ErrorState';
 import { Queue, CheckCircle, Cancel, AccessTime, Person } from '@mui/icons-material';
+import { useNotification } from '../contexts/NotificationContext';
 
 const ShiftQueue = () => {
   const [openShiftId, setOpenShiftId] = useState('');
   const [status, setStatus] = useState(null);
   const [loading, setLoading] = useState(false);
+  const { add: addToast } = useNotification();
 
   async function loadStatus() {
     if (!openShiftId) return;
@@ -33,11 +35,12 @@ const ShiftQueue = () => {
       if (res.ok) {
         // Better feedback than alert
         loadStatus();
+        addToast({ severity: response === 'accepted' ? 'success' : 'info', message: `Response: ${response}` });
       } else {
-        console.error('Failed to respond to queue entry');
+        addToast({ severity: 'error', message: 'Failed to respond to queue entry' });
       }
     } catch (err) {
-      console.error('Error responding to queue:', err);
+      addToast({ severity: 'error', message: 'Error responding to queue' });
     }
   }
 

@@ -6,36 +6,61 @@
 const sql = require('mssql');
 const { ConnectionPool } = require('mssql');
 
+// Normalize env flags
+const USE_WINDOWS_AUTH = (process.env.USE_WINDOWS_AUTH === 'true') || (process.env.DB_TRUST_CONNECTION === 'true');
+const DB_SERVER = process.env.DB_SERVER || 'localhost\\SQLEXPRESS';
+const DB_NAME = process.env.DB_NAME || 'HospitalScheduler';
+const DB_USER = process.env.DB_USER || 'sa';
+const DB_PASSWORD = process.env.DB_PASSWORD || 'YourStrong@Passw0rd';
+const DB_ENCRYPT = (String(process.env.DB_ENCRYPT || 'true').toLowerCase() === 'true');
+const DB_TRUST_SERVER_CERT = (String(process.env.DB_TRUST_SERVER_CERT || process.env.DB_TRUST_SERVER_CERTIFICATE || 'true').toLowerCase() === 'true');
+
+// Parse instance name if provided like HOST\INSTANCE
+function parseServer(server) {
+    const m = /^(.*)\\([^\\]+)$/.exec(server);
+    if (m) return { host: m[1], instanceName: m[2] };
+    return { host: server, instanceName: undefined };
+}
+
+const parsed = parseServer(DB_SERVER);
+
 // SQL Server configuration (SQL auth)
 const config = {
-    user: process.env.DB_USER || 'sa',
-    password: process.env.DB_PASSWORD || 'YourStrong@Passw0rd',
-    database: process.env.DB_NAME || 'HospitalScheduler',
-    server: process.env.DB_SERVER || 'localhost\\SQLEXPRESS',
+    user: DB_USER,
+    password: DB_PASSWORD,
+    database: DB_NAME,
+    server: parsed.host,
     pool: {
         max: 10,
         min: 0,
         idleTimeoutMillis: 30000
     },
     options: {
-        encrypt: true, // Use encryption
-        trustServerCertificate: true, // For local development
+        encrypt: DB_ENCRYPT, // Use encryption
+        trustServerCertificate: DB_TRUST_SERVER_CERT, // For local development
         enableArithAbort: true,
-        instanceName: 'SQLEXPRESS'
+        instanceName: parsed.instanceName
     }
 };
 
 // Alternative Windows Authentication config
-const windowsAuthConfig = {
-    database: 'HospitalScheduler',
-    server: 'localhost\\SQLEXPRESS',
-    options: {
-        trustedConnection: true,
-        encrypt: true,
-        trustServerCertificate: true,
-        enableArithAbort: true
-    }
-};
+// Windows Authentication config (requires msnodesqlv8 driver)
+function getWindowsAuthConfig(dbName) {
+    const { host, instanceName } = parseServer(DB_SERVER);
+    const cfg = {
+        server: host,
+        database: dbName,
+        driver: 'msnodesqlv8',
+        options: {
+            trustedConnection: true,
+            trustServerCertificate: DB_TRUST_SERVER_CERT,
+            enableArithAbort: true
+        },
+        pool: { max: 10, min: 0, idleTimeoutMillis: 30000 }
+    };
+    if (instanceName) cfg.options.instanceName = instanceName;
+    return cfg;
+}
 
 class DatabaseService {
     constructor() {
@@ -51,12 +76,12 @@ class DatabaseService {
             return this.pool;
         }
         try {
-            const useWindowsAuth = process.env.USE_WINDOWS_AUTH === 'true';
-            const dbName = process.env.DB_NAME || 'HospitalScheduler';
+            const useWindowsAuth = USE_WINDOWS_AUTH;
+            const dbName = DB_NAME;
 
             // Step 1: Connect to master to ensure database exists
             const masterConfig = useWindowsAuth
-                ? { ...windowsAuthConfig, database: 'master' }
+                ? getWindowsAuthConfig('master')
                 : { ...config, database: 'master' };
 
             const serverPool = new ConnectionPool(masterConfig);
@@ -65,7 +90,7 @@ class DatabaseService {
             await serverPool.close();
 
             // Step 2: Connect to target database
-            const dbConfig = useWindowsAuth ? { ...windowsAuthConfig, database: dbName } : { ...config, database: dbName };
+            const dbConfig = useWindowsAuth ? getWindowsAuthConfig(dbName) : { ...config, database: dbName };
             this.pool = new ConnectionPool(dbConfig);
             await this.pool.connect();
             this.connected = true;

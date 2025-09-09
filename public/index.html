@@ -4,14 +4,20 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="theme-color" content="#2563eb" />
-    <title>Hospital Shift Scheduler</title>
+    <title>Shiftwise</title>
+    <link rel="icon" href="favicon.ico" sizes="any" />
+    <link rel="apple-touch-icon" href="apple-touch-icon.png" />
+    <link rel="manifest" href="manifest.json" />
     
       <script>(function(){ try{ 
-        // Prefer IIS reverse proxy when app is hosted under /scheduler
-        if (!window.__API_BASE__) {
-          if (location.hostname === 'localhost') { window.__API_BASE__ = 'http://localhost:3001'; } else { window.__API_BASE__ = '/api'; }
+        // Force absolute, portless base for all API/WS calls
+        if (!window.__PUBLIC_BASE__) {
+          window.__PUBLIC_BASE__ = location.origin.replace(/\/$/, '') + '/scheduler';
         }
-        // Use BrowserRouter by default now that URL Rewrite is installed
+        // Force polling transport for older cached bundles (avoid WS handshake issues)
+        window.__FORCE_POLLING__ = true;
+        try { if (window.__FORCE_POLLING__ && 'WebSocket' in window) { window.WebSocket = undefined; } } catch(_){}
+        // Use BrowserRouter by default with IIS URL Rewrite
         window.__USE_HASH_ROUTER__ = false;
       }catch(e){} })();</script>
   </head>

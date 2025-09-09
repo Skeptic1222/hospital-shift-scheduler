@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useState } from 'react';
+﻿import { useEffect, useState } from 'react';
 import { Box, Typography } from '@mui/material';
 import StandardButton from '../components/common/StandardButton';
 
@@ -54,9 +54,7 @@ const Login = () => {
         itp_support: true,
         ux_mode: 'popup'
       });
-    } catch (e) {
-      // ignore
-    }
+    } catch (e) { void e; }
   }, [googleReady, clientId]);
 
   const handleGoogleSignIn = () => {
@@ -65,7 +63,7 @@ const Login = () => {
         window.google.accounts.id.disableAutoSelect?.();
         window.google.accounts.id.prompt();
       }
-    } catch (_) {}
+    } catch (e) { void e; }
   };
 
   const handleDemoLogin = (email, name, role = 'user') => {
@@ -76,6 +74,7 @@ const Login = () => {
       name: name,
       email: email,
       picture: 'https://ui-avatars.com/api/?name=' + encodeURIComponent(name),
+      roles: [role],
       iat: Math.floor(Date.now() / 1000),
       exp: Math.floor(Date.now() / 1000) + 86400 // 24 hours
     }));
@@ -143,5 +142,3 @@ const Login = () => {
 };
 
 export default Login;
-
-

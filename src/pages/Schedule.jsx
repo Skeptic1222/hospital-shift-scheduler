@@ -1,10 +1,13 @@
-﻿import React, { useEffect, useMemo, useState } from 'react';
-import { Box, Dialog, DialogActions, DialogContent, DialogTitle, Grid, TextField, Typography, Paper, Select, MenuItem, FormControl, InputLabel, Chip } from '@mui/material';
+﻿import { useEffect, useMemo, useState } from 'react';
+import { Box, Dialog, DialogActions, DialogContent, DialogTitle, Grid, TextField, Typography, Paper, Select, MenuItem, FormControl, InputLabel, Chip, Switch, FormControlLabel, Slider, ToggleButtonGroup, ToggleButton } from '@mui/material';
+import WeekTimeline from '../components/WeekTimeline';
 import { currentUserFromToken } from '../utils/auth';
 import StandardButton from '../components/common/StandardButton';
-import { LoadingSpinner, CardSkeleton } from '../components/common/LoadingState';
+import { CardSkeleton } from '../components/common/LoadingState';
+import { useNotification } from '../contexts/NotificationContext';
 import { ErrorMessage } from '../components/common/ErrorState';
 import { CalendarToday, AccessTime, Group, LocalHospital } from '@mui/icons-material';
+import { exportShiftsICS, exportShiftsCSV } from '../utils/export';
 
 const initialForm = {
   department_id: '',
@@ -26,10 +29,22 @@ const Schedule = () => {
   const [creating, setCreating] = useState(false);
   const [assignOpen, setAssignOpen] = useState(false);
   const [assignShift, setAssignShift] = useState({ id: '', userId: '' });
+  const [editOpen, setEditOpen] = useState(false);
+  const [editShift, setEditShift] = useState(null);
   const [staff, setStaff] = useState([]);
+  const { add: addToast } = useNotification();
+  const [filterDept, setFilterDept] = useState(() => localStorage.getItem('schedule_filter_dept') || '');
+  const [filterSkill, setFilterSkill] = useState(() => localStorage.getItem('schedule_filter_skill') || '');
+  const [showOpenOnly, setShowOpenOnly] = useState(() => localStorage.getItem('schedule_filter_open') === '1');
+  const [presetName, setPresetName] = useState('');
+  const [presets, setPresets] = useState(() => {
+    try { return JSON.parse(localStorage.getItem('schedule_filter_presets') || '[]'); } catch (e) { return []; }
+  });
+  const [viewMode, setViewMode] = useState('cards');
+  const [dragOverShift, setDragOverShift] = useState('');
 
   useEffect(() => { loadShifts(); }, []);
-  useEffect(() => { (async () => { try { const { apiFetch } = await import('../utils/api'); const r = await apiFetch('/api/staff'); const d = await r.json(); setStaff(d.staff||[]);} catch(_){} })(); }, []);
+  useEffect(() => { (async () => { try { const { apiFetch } = await import('../utils/api'); const r = await apiFetch('/api/staff'); const d = await r.json(); setStaff(d.staff||[]);} catch(_){ /* ignore */ } })(); }, []);
 
   async function loadShifts() {
     try {
@@ -49,11 +64,14 @@ const Schedule = () => {
       const body = { ...form, required_staff: Number(form.required_staff) || 1 };
       const res = await apiFetch('/api/shifts', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
       const data = await res.json();
-      if (data?.shift) setShifts(prev => [data.shift, ...prev]);
+      if (data?.shift) {
+        setShifts(prev => [data.shift, ...prev]);
+        addToast({ severity: 'success', message: 'Shift created' });
+      }
       setOpen(false);
       setForm(initialForm);
     } catch (e) {
-      alert('Failed to create shift');
+      addToast({ severity: 'error', message: 'Failed to create shift' });
     } finally { setCreating(false); }
   }
 
@@ -61,20 +79,122 @@ const Schedule = () => {
     try {
       const { apiFetch } = await import('../utils/api');
       await apiFetch('/api/queue/open-shift', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ shift_id: shiftId, reason: 'Staffing need', urgency_level: 3, expires_in_hours: 24 }) });
-      alert('Open shift posted to FCFS queue');
+      addToast({ severity: 'success', message: 'Open shift posted to FCFS queue' });
     } catch (e) {
-      alert('Failed to open shift');
+      addToast({ severity: 'error', message: 'Failed to open shift' });
     }
   }
 
   async function assignStaff() {
     if (!assignShift.id || !assignShift.userId) return;
-    try { const { apiFetch } = await import('../utils/api'); await apiFetch('/api/shifts/assign', { method:'POST', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify({ shift_id: assignShift.id, user_id: assignShift.userId }) }); setAssignOpen(false); await loadShifts(); } catch(_) { alert('Failed to assign'); }
+    try {
+      const { apiFetch } = await import('../utils/api');
+      await apiFetch('/api/shifts/assign', { method:'POST', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify({ shift_id: assignShift.id, user_id: assignShift.userId }) });
+      setAssignOpen(false);
+      addToast({ severity: 'success', message: 'Staff assigned' });
+      await loadShifts();
+    } catch(_) {
+      addToast({ severity: 'error', message: 'Failed to assign staff' });
+    }
   }
+
+  async function handleDropAssign(shiftId, userId) {
+    if (!shiftId || !userId) return;
+    try {
+      const { apiFetch } = await import('../utils/api');
+      await apiFetch('/api/shifts/assign', { method:'POST', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify({ shift_id: shiftId, user_id: userId }) });
+      addToast({ severity: 'success', message: 'Staff assigned' });
+      await loadShifts();
+    } catch(_) {
+      addToast({ severity: 'error', message: 'Failed to assign staff' });
+    } finally {
+      setDragOverShift('');
+    }
+  }
+
+  async function saveEdit() {
+    if (!editShift) return;
+    try {
+      const { apiFetch } = await import('../utils/api');
+      const body = {
+        date: editShift.date || editShift.shift_date,
+        start_time: editShift.start_time,
+        end_time: editShift.end_time,
+        required_staff: Number(editShift.required_staff) || 1,
+        status: editShift.status || 'open',
+        department_id: editShift.department_id
+      };
+      await apiFetch(`/api/shifts/${editShift.id}`, { method:'PUT', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify(body) });
+      addToast({ severity: 'success', message: 'Shift updated' });
+      setEditOpen(false); setEditShift(null); await loadShifts();
+    } catch(_) {
+      addToast({ severity: 'error', message: 'Failed to update shift' });
+    }
+  }
+
+  const toMinutes = (t) => {
+    if (!t) return 0;
+    if (typeof t === 'string' && t.includes('T')) {
+      const d = new Date(t); return d.getHours()*60 + d.getMinutes();
+    }
+    const [hh, mm] = (t || '00:00:00').split(':');
+    return (parseInt(hh,10)||0)*60 + (parseInt(mm,10)||0);
+  };
+  const toTimeStr = (m) => {
+    const hh = Math.floor(m/60)%24; const mm = m%60;
+    return `${String(hh).padStart(2,'0')}:${String(mm).padStart(2,'0')}:00`;
+  };
 
   return (
     <Box>
       <Typography variant="h5" sx={{ mb: 2 }}>Schedule</Typography>
+      {/* Filters */}
+      <Box sx={{ mb: 2, display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+        <FormControl size="small" sx={{ minWidth: 220 }}>
+          <InputLabel>Department</InputLabel>
+          <Select label="Department" value={filterDept} onChange={(e)=>{ setFilterDept(e.target.value); localStorage.setItem('schedule_filter_dept', e.target.value); }}>
+            <MenuItem value=""><em>All</em></MenuItem>
+            {Array.from(new Set(shifts.map(s => s.department_name || s.department_id).filter(Boolean))).map(d => (
+              <MenuItem key={d} value={d}>{d}</MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+        <TextField
+          size="small"
+          label="Skill contains"
+          placeholder="e.g., ICU, ACLS"
+          value={filterSkill}
+          onChange={(e)=>{ setFilterSkill(e.target.value); localStorage.setItem('schedule_filter_skill', e.target.value); }}
+        />
+        <FormControlLabel
+          control={<Switch checked={showOpenOnly} onChange={(e)=>{ setShowOpenOnly(e.target.checked); localStorage.setItem('schedule_filter_open', e.target.checked ? '1' : '0'); }} />}
+          label="Open shifts only"
+        />
+        <TextField size="small" placeholder="Save preset name" value={presetName} onChange={(e)=>setPresetName(e.target.value)} />
+        <StandardButton size="small" variant="outlined" onClick={() => {
+          if (!presetName.trim()) return;
+          const p = { name: presetName.trim(), dept: filterDept, skill: filterSkill, open: showOpenOnly };
+          const next = [p, ...presets.filter(x => x.name !== p.name)].slice(0, 10);
+          setPresets(next);
+          localStorage.setItem('schedule_filter_presets', JSON.stringify(next));
+          setPresetName('');
+          addToast({ severity: 'success', message: 'Preset saved' });
+        }}>Save Preset</StandardButton>
+        {presets.length > 0 && (
+          <FormControl size="small" sx={{ minWidth: 160 }}>
+            <InputLabel>Load Preset</InputLabel>
+            <Select label="Load Preset" value="" onChange={(e)=>{
+              const p = presets.find(x => x.name === e.target.value);
+              if (!p) return;
+              setFilterDept(p.dept); localStorage.setItem('schedule_filter_dept', p.dept || '');
+              setFilterSkill(p.skill); localStorage.setItem('schedule_filter_skill', p.skill || '');
+              setShowOpenOnly(!!p.open); localStorage.setItem('schedule_filter_open', p.open ? '1' : '0');
+            }}>
+              {presets.map(p => <MenuItem key={p.name} value={p.name}>{p.name}</MenuItem>)}
+            </Select>
+          </FormControl>
+        )}
+      </Box>
       {canManage && (
         <Box sx={{ mb: 3, display: 'flex', gap: 2, flexWrap: 'wrap' }}>
           <StandardButton
@@ -84,8 +204,46 @@ const Schedule = () => {
           >
             Create Shift
           </StandardButton>
+          <Typography variant="body2" sx={{ alignSelf: 'center' }}>
+            Drag a staff member onto a shift to assign
+          </Typography>
+          <StandardButton variant="outlined" onClick={() => {
+            const filtered = shifts
+              .filter(s => !filterDept || (s.department_name === filterDept || s.department_id === filterDept))
+              .filter(s => !filterSkill || ((s.required_skills || '').toLowerCase().includes(filterSkill.toLowerCase())))
+              .filter(s => !showOpenOnly || (String(s.status || '').toLowerCase() === 'open'));
+            exportShiftsICS(filtered, 'shiftwise_shifts.ics');
+          }}>Export ICS</StandardButton>
+          <StandardButton variant="outlined" onClick={() => {
+            const filtered = shifts
+              .filter(s => !filterDept || (s.department_name === filterDept || s.department_id === filterDept))
+              .filter(s => !filterSkill || ((s.required_skills || '').toLowerCase().includes(filterSkill.toLowerCase())))
+              .filter(s => !showOpenOnly || (String(s.status || '').toLowerCase() === 'open'));
+            exportShiftsCSV(filtered, 'shiftwise_shifts.csv');
+          }}>Export CSV</StandardButton>
         </Box>
       )}
+      {canManage && (
+        <Box sx={{ mb: 2, display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+          {staff.slice(0, 20).map(st => (
+            <Chip
+              key={st.id}
+              label={st.name || `${st.first_name} ${st.last_name}`}
+              draggable
+              onDragStart={(e) => { e.dataTransfer.setData('text/plain', st.id); }}
+              sx={{ cursor: 'grab' }}
+            />
+          ))}
+        </Box>
+      )}
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+        <Typography variant="body2" color="text.secondary">View</Typography>
+        <ToggleButtonGroup size="small" value={viewMode} exclusive onChange={(e,v)=> v && setViewMode(v)}>
+          <ToggleButton value="cards">Cards</ToggleButton>
+          <ToggleButton value="timeline">Timeline</ToggleButton>
+        </ToggleButtonGroup>
+      </Box>
+
       {loading ? (
         <CardSkeleton count={4} />
       ) : shifts.length === 0 ? (
@@ -94,18 +252,40 @@ const Schedule = () => {
           title="No shifts available"
           message="There are no shifts scheduled at this time."
         />
+      ) : viewMode === 'timeline' ? (
+        <WeekTimeline
+          shifts={shifts
+            .filter(s => !filterDept || (s.department_name === filterDept || s.department_id === filterDept))
+            .filter(s => !filterSkill || ((s.required_skills || '').toLowerCase().includes(filterSkill.toLowerCase())))
+            .filter(s => !showOpenOnly || (String(s.status || '').toLowerCase() === 'open'))}
+          onShiftUpdate={(u, preview) => {
+            if (preview) return; // only commit on mouseup
+            setEditShift({ id: u.id, date: u.date, start_time: u.start_time, end_time: u.end_time, required_staff: 1, status: 'open' });
+            saveEdit();
+          }}
+        />
       ) : (
         <Grid container spacing={2}>
-          {shifts.map((s) => (
+          {shifts
+            .filter(s => !filterDept || (s.department_name === filterDept || s.department_id === filterDept))
+            .filter(s => !filterSkill || ((s.required_skills || '').toLowerCase().includes(filterSkill.toLowerCase())))
+            .filter(s => !showOpenOnly || (String(s.status || '').toLowerCase() === 'open'))
+            .map((s) => (
             <Grid item xs={12} md={6} key={s.id}>
-              <Paper sx={{
-                p: 2.5,
-                transition: 'all 0.3s ease',
-                '&:hover': {
-                  boxShadow: 4,
-                  transform: 'translateY(-2px)'
-                }
-              }}>
+              <Paper
+                onDragOver={(e)=>{ e.preventDefault(); setDragOverShift(s.id); }}
+                onDragLeave={()=> setDragOverShift(prev => prev===s.id ? '' : prev)}
+                onDrop={(e)=> { e.preventDefault(); const uid = e.dataTransfer.getData('text/plain'); handleDropAssign(s.id, uid); }}
+                sx={{
+                  p: 2.5,
+                  transition: 'all 0.3s ease',
+                  '&:hover': {
+                    boxShadow: 4,
+                    transform: 'translateY(-2px)'
+                },
+                outline: dragOverShift === s.id ? '2px dashed #2563eb' : 'none'
+              }}
+              >
                 <Box sx={{ display: 'flex', alignItems: 'center', mb: 1.5 }}>
                   <CalendarToday sx={{ mr: 1, color: 'text.secondary', fontSize: 20 }} />
                   <Typography variant="h6">{s.date || s.shift_date}</Typography>
@@ -164,6 +344,24 @@ const Schedule = () => {
                     flexDirection: { xs: 'column', sm: 'row' },
                     '& > *': { flex: { xs: 1, sm: 'initial' } }
                   }}>
+                    {/* Time range slider */}
+                    <Box sx={{ width: '100%', px: 1 }}>
+                      <Typography variant="caption" color="text.secondary">Adjust Time</Typography>
+                      <Slider
+                        size="small"
+                        value={[toMinutes(s.start_time || s.start_datetime), Math.max(toMinutes(s.start_time || s.start_datetime)+30, toMinutes(s.end_time || s.end_datetime))]}
+                        min={0}
+                        max={24*60}
+                        step={15}
+                        valueLabelDisplay="auto"
+                        valueLabelFormat={(v)=>`${String(Math.floor(v/60)).padStart(2,'0')}:${String(v%60).padStart(2,'0')}`}
+                        onChangeCommitted={(_, val)=>{
+                          const [a,b] = val;
+                          setEditShift({ id: s.id, date: s.date || s.shift_date, start_time: toTimeStr(a), end_time: toTimeStr(b), required_staff: s.required_staff, status: s.status, department_id: s.department_id });
+                          saveEdit();
+                        }}
+                      />
+                    </Box>
                     <StandardButton
                       size="medium"
                       variant="outlined"
@@ -179,6 +377,14 @@ const Schedule = () => {
                       sx={{ width: { xs: '100%', sm: 'auto' } }}
                     >
                       Assign Staff
+                    </StandardButton>
+                    <StandardButton
+                      size="medium"
+                      variant="outlined"
+                      onClick={() => { setEditShift({ id: s.id, date: s.date || s.shift_date, start_time: s.start_time, end_time: s.end_time, required_staff: s.required_staff, status: s.status, department_id: s.department_id }); setEditOpen(true); }}
+                      sx={{ width: { xs: '100%', sm: 'auto' } }}
+                    >
+                      Edit
                     </StandardButton>
                   </Box>
                 )}
@@ -288,6 +494,40 @@ const Schedule = () => {
       </Dialog>
 
       <Dialog
+        open={editOpen}
+        onClose={() => { setEditOpen(false); setEditShift(null); }}
+        fullWidth
+        maxWidth="sm"
+      >
+        <DialogTitle>Edit Shift</DialogTitle>
+        <DialogContent>
+          {editShift && (
+            <Grid container spacing={2} sx={{ mt: 1 }}>
+              <Grid item xs={12}>
+                <TextField fullWidth label="Date" type="date" value={editShift.date} onChange={(e)=>setEditShift(prev=>({ ...prev, date:e.target.value }))} InputLabelProps={{ shrink: true }} />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField fullWidth label="Start Time" type="time" value={editShift.start_time} onChange={(e)=>setEditShift(prev=>({ ...prev, start_time:e.target.value }))} InputLabelProps={{ shrink: true }} />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField fullWidth label="End Time" type="time" value={editShift.end_time} onChange={(e)=>setEditShift(prev=>({ ...prev, end_time:e.target.value }))} InputLabelProps={{ shrink: true }} />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField fullWidth label="Required Staff" type="number" value={editShift.required_staff} onChange={(e)=>setEditShift(prev=>({ ...prev, required_staff:e.target.value }))} inputProps={{ min: 1 }} />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField fullWidth label="Status" value={editShift.status || 'open'} onChange={(e)=>setEditShift(prev=>({ ...prev, status:e.target.value }))} />
+              </Grid>
+            </Grid>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <StandardButton onClick={() => { setEditOpen(false); setEditShift(null); }}>Cancel</StandardButton>
+          <StandardButton variant="contained" onClick={saveEdit}>Save</StandardButton>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog
         open={assignOpen}
         onClose={() => setAssignOpen(false)}
         fullWidth
@@ -334,4 +574,3 @@ const Schedule = () => {
 };
 
 export default Schedule;
-

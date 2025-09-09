@@ -1,9 +1,8 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   Box,
   Card,
   CardContent,
-  Divider,
   FormControl,
   InputLabel,
   MenuItem,
@@ -15,9 +14,9 @@ import {
 } from '@mui/material';
 import StandardButton from '../components/common/StandardButton';
 import { currentUserFromToken } from '../utils/auth';
-import { LoadingSpinner } from '../components/common/LoadingState';
 import { ErrorMessage } from '../components/common/ErrorState';
 import { useResponsive } from '../hooks/useResponsive';
+import { useNotification } from '../contexts/NotificationContext';
 
 const Admin = () => {
   const me = useMemo(() => currentUserFromToken(), []);
@@ -30,8 +29,14 @@ const Admin = () => {
   const [message, setMessage] = useState('');
   const [seedBusy, setSeedBusy] = useState(false);
   const [messageType, setMessageType] = useState('info');
+  const [allUsers, setAllUsers] = useState([]);
+  const [filtered, setFiltered] = useState([]);
+  const [query, setQuery] = useState('');
+  const [updatingUser, setUpdatingUser] = useState('');
+  const { add: addToast } = useNotification();
 
   useEffect(() => { if (isAdmin) loadRoles(); }, [isAdmin]);
+  useEffect(() => { if (isAdmin) loadUsers(); }, [isAdmin]);
 
   async function loadRoles() {
     try {
@@ -62,6 +67,68 @@ const Admin = () => {
       else { setMessage('Failed to assign role'); setMessageType('error'); }
     } catch (_) { setMessage('Failed to assign role'); setMessageType('error'); }
     finally { setBusy(false); }
+  }
+
+  async function loadUsers() {
+    try {
+      const { apiFetch } = await import('../utils/api');
+      const res = await apiFetch('/api/staff');
+      const data = await res.json();
+      const users = (data.staff || []).map(u => ({
+        id: u.id,
+        email: u.email,
+        name: u.name || `${u.first_name || ''} ${u.last_name || ''}`.trim(),
+        department: u.department_name || u.department_id || '',
+        role: u.role || (u.title && u.title.toLowerCase().includes('supervisor') ? 'supervisor' : 'user'),
+      }));
+      setAllUsers(users);
+      setFiltered(users);
+    } catch (_) {
+      // fallback demo
+      setAllUsers([]);
+      setFiltered([]);
+    }
+  }
+
+  function filterUsers(q) {
+    const qq = (q || '').toLowerCase();
+    if (!qq) return setFiltered(allUsers);
+    setFiltered(allUsers.filter(u => (
+      (u.email || '').toLowerCase().includes(qq) ||
+      (u.name || '').toLowerCase().includes(qq) ||
+      (u.department || '').toLowerCase().includes(qq) ||
+      (u.role || '').toLowerCase().includes(qq)
+    )));
+  }
+
+  async function updateUserRole(emailToUpdate, newRole) {
+    try {
+      setUpdatingUser(emailToUpdate);
+      const { apiFetch } = await import('../utils/api');
+      const res = await apiFetch('/api/admin/users/assign-role', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: emailToUpdate, roleName: newRole })
+      });
+      if (res.ok) {
+        setMessage(`Updated ${emailToUpdate} to ${newRole}`);
+        setMessageType('success');
+        addToast({ severity: 'success', message: `Updated ${emailToUpdate} to ${newRole}` });
+        // reflect locally
+        setAllUsers(prev => prev.map(u => u.email === emailToUpdate ? { ...u, role: newRole } : u));
+        setFiltered(prev => prev.map(u => u.email === emailToUpdate ? { ...u, role: newRole } : u));
+      } else {
+        setMessage('Failed to update role');
+        setMessageType('error');
+        addToast({ severity: 'error', message: 'Failed to update role' });
+      }
+    } catch (_) {
+      setMessage('Failed to update role');
+      setMessageType('error');
+      addToast({ severity: 'error', message: 'Failed to update role' });
+    } finally {
+      setUpdatingUser('');
+    }
   }
 
   async function seedStaff() {
@@ -121,6 +188,63 @@ const Admin = () => {
       )}
 
       <Grid container spacing={3}>
+        {/* User Search & Roles */}
+        <Grid item xs={12}>
+          <Card sx={{ borderRadius: 2, boxShadow: 2 }}>
+            <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
+              <Typography variant="h6" sx={{ mb: 2 }}>User Search & Role Edit</Typography>
+              <Grid container spacing={2} sx={{ mb: 2 }}>
+                <Grid item xs={12} md={6}>
+                  <TextField
+                    fullWidth
+                    placeholder="Search by name, email, department, or role"
+                    value={query}
+                    onChange={(e)=>{ setQuery(e.target.value); filterUsers(e.target.value); }}
+                  />
+                </Grid>
+                <Grid item xs={12} md={6}>
+                  <Typography variant="body2" color="text.secondary" sx={{ mt: { xs: 1, md: 1.5 } }}>
+                    {filtered.length} users
+                  </Typography>
+                </Grid>
+              </Grid>
+
+              <Grid container spacing={1}>
+                {filtered.map(u => (
+                  <Grid item xs={12} key={u.email}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, p: 1.5, border: '1px solid', borderColor: 'divider', borderRadius: 1 }}>
+                      <Box sx={{ flex: 1, minWidth: 0 }}>
+                        <Typography variant="subtitle2" noWrap>{u.name || u.email}</Typography>
+                        <Typography variant="body2" color="text.secondary" noWrap>{u.email}</Typography>
+                        <Typography variant="caption" color="text.secondary" noWrap>Dept: {u.department || '—'}</Typography>
+                      </Box>
+                      <FormControl size="small" sx={{ minWidth: 160 }}>
+                        <InputLabel id={`role-${u.email}`}>Role</InputLabel>
+                        <Select
+                          labelId={`role-${u.email}`}
+                          label="Role"
+                          value={u.role || 'user'}
+                          onChange={(e)=> updateUserRole(u.email, e.target.value)}
+                          disabled={updatingUser === u.email}
+                        >
+                          {roles.length ? roles.map(r => (
+                            <MenuItem key={r.name} value={r.name}>{r.name}</MenuItem>
+                          )) : (
+                            <>
+                              <MenuItem value="admin">admin</MenuItem>
+                              <MenuItem value="supervisor">supervisor</MenuItem>
+                              <MenuItem value="user">user</MenuItem>
+                            </>
+                          )}
+                        </Select>
+                      </FormControl>
+                    </Box>
+                  </Grid>
+                ))}
+              </Grid>
+            </CardContent>
+          </Card>
+        </Grid>
         {/* Demo Data Section */}
         <Grid item xs={12}>
           <Card sx={{ borderRadius: 2, boxShadow: 2 }}>

@@ -26,7 +26,7 @@ A HIPAA-compliant hospital shift scheduling system with First-Come, First-Served
 
 ### Prerequisites
 
-- Node.js 16+
+- Node.js 18+
 - SQL Server Express
 - Redis
 - IIS with iisnode module (for production)
@@ -56,10 +56,15 @@ npm run db:migrate
 npm run db:seed
 ```
 
-5. Start development server:
-```bash
-npm run dev
-```
+5. Start API behind IIS (no port in browser URL):
+- Windows (demo/offline):
+  - Open PowerShell as Administrator in `C:\inetpub\wwwroot\scheduler`
+  - `$env:SKIP_EXTERNALS='true'`
+  - `node server.js`
+- WSL (SQL auth):
+  - `DEMO_MODE=true SKIP_EXTERNALS=true ./scripts/start-api-wsl.sh`
+
+Then browse to `http://localhost/scheduler`.
 
 ## Development
 
@@ -114,6 +119,7 @@ Key environment variables:
 - `REDIS_HOST` - Redis server
 - `JWT_SECRET` - JWT signing secret
 - `ALLOWED_ORIGINS` - CORS origins
+- `REACT_APP_PUBLIC_BASE` - Public base URL for client (e.g., `http://localhost/scheduler`)
 
 See `.env.example` for full list.
 
@@ -128,6 +134,19 @@ The shift distribution uses weighted priorities:
 ## API Documentation
 
 API documentation available at `/api/docs` when running in development mode.
+
+## Reverse Proxy (IIS/ARR)
+- The app is hosted under `/scheduler`. CRA `homepage` is set to `/scheduler` so asset paths resolve.
+- IIS `web.config` routes:
+  - `/scheduler/api/*` and `/scheduler/socket.io/*` → `http://localhost:3001`
+  - PWA icons (`/scheduler/android-chrome-*.png`, `/scheduler/apple-touch-icon.png`) → `/api/assets/icon` (placeholder images) unless real icons are provided.
+- Keep browser URLs portless; IIS proxies to the Node API on port 3001.
+
+## PWA Icons
+- Add branded icons to `public/`:
+  - `android-chrome-192x192.png`
+  - `android-chrome-512x512.png`
+- Rebuild with `npm run build` to serve these from `/scheduler/…`. The server will otherwise provide placeholder icons via `/api/assets/icon`.
 
 ## Security
 

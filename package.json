@@ -11,7 +11,8 @@
     "test": "jest --coverage",
     "lint": "eslint .",
     "db:migrate": "node migrations/run.js",
-    "db:seed": "node seeds/run.js"
+    "db:seed": "node seeds/run.js",
+    "db:check": "node scripts/db-check.js"
   },
   "dependencies": {
     "@auth0/auth0-react": "^2.2.4",
@@ -63,6 +64,9 @@
     "nodemon": "^3.0.2",
     "react-scripts": "^5.0.1",
     "supertest": "^6.3.3"
+  },
+  "optionalDependencies": {
+    "msnodesqlv8": "^3.0.0"
   },
   "engines": {
     "node": ">=18.0.0",

@@ -1,10 +1,7 @@
 // Updated: Button sizing fix - timestamp 17:21 - CACHE BUST VERSION 2
-import React from 'react';
 import { Card, CardContent, Typography, Grid } from '@mui/material';
 import StandardButton from './common/StandardButton';
 
-// Force cache bust
-const VERSION = '2.0.1';
 
 const QuickActions = ({ onAction }) => (
   <Card>

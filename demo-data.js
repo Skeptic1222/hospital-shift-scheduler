@@ -137,6 +137,24 @@ function assignToShift(shiftId, userId) {
   return true;
 }
 
+function updateShift(shiftId, data) {
+  const idx = shiftStore.findIndex(s => s.id === shiftId);
+  if (idx === -1) return null;
+  const s = shiftStore[idx];
+  const updated = {
+    ...s,
+    date: data.date || s.date,
+    start_time: data.start_time || s.start_time,
+    end_time: data.end_time || s.end_time,
+    required_staff: typeof data.required_staff !== 'undefined' ? data.required_staff : s.required_staff,
+    department_id: data.department_id || s.department_id,
+    status: data.status || s.status,
+    notes: typeof data.notes !== 'undefined' ? data.notes : s.notes
+  };
+  shiftStore[idx] = updated;
+  return updated;
+}
+
 module.exports = {
   departments,
   titles,
@@ -149,7 +167,8 @@ module.exports = {
   seedShifts,
   listShifts,
   createShift,
-  assignToShift
+  assignToShift,
+  updateShift
 };
 
 

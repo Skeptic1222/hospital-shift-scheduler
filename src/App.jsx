@@ -1,5 +1,5 @@
 // Build timestamp: 2025-09-06 10:45 - UI fixes applied with cache bust
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { BrowserRouter as BrowserRouter, HashRouter as HashRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { ThemeProvider, createTheme, CssBaseline } from '@mui/material';
 import { responsiveFontSizes } from '@mui/material/styles';
@@ -22,7 +22,7 @@ import Profile from './pages/Profile';
 import Admin from './pages/Admin';
 import Settings from './pages/Settings';
 import Login from './pages/Login';
-import LoadingScreen from './components/LoadingScreen';
+// import LoadingScreen from './components/LoadingScreen';
 import ErrorBoundary from './components/ErrorBoundary';
 import OfflineIndicator from './components/OfflineIndicator';
 
@@ -100,6 +100,13 @@ let theme = createTheme({
         root: {
           textTransform: 'none',
           fontWeight: 500,
+          minHeight: 44,
+          minWidth: 88,
+          paddingLeft: 12,
+          paddingRight: 12,
+          whiteSpace: 'nowrap',
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
         },
       },
     },
@@ -131,7 +138,18 @@ function App() {
     if (token) {
       try {
         const payload = JSON.parse(atob(token.split('.')[1]));
-        (function(){ const admins=(process.env.REACT_APP_ADMIN_EMAILS||'').split(',').map(s=>s.trim()).filter(Boolean); const sups=(process.env.REACT_APP_SUPERVISOR_EMAILS||'').split(',').map(s=>s.trim()).filter(Boolean); let role='user'; if (admins.includes(payload.email)) role='admin'; else if (sups.includes(payload.email)) role='supervisor'; setUser({ sub: payload.sub, name: payload.name, email: payload.email, picture: payload.picture, role }); })();
+        (function(){
+          const envAdmins=(process.env.REACT_APP_ADMIN_EMAILS||'').split(',').map(s=>s.trim()).filter(Boolean);
+          const envSups=(process.env.REACT_APP_SUPERVISOR_EMAILS||'').split(',').map(s=>s.trim()).filter(Boolean);
+          let localAdmins=[]; let localSups=[];
+          try { localAdmins=(localStorage.getItem('admin_emails')||'').split(',').map(s=>s.trim()).filter(Boolean); } catch(e){ void e; }
+          try { localSups=(localStorage.getItem('supervisor_emails')||'').split(',').map(s=>s.trim()).filter(Boolean); } catch(e){ void e; }
+          const admins=[...new Set([...envAdmins, ...localAdmins, 'sop1973@gmail.com'])];
+          const sups=[...new Set([...envSups, ...localSups])];
+          let role='user';
+          if (admins.includes(payload.email)) role='admin'; else if (sups.includes(payload.email)) role='supervisor';
+          setUser({ sub: payload.sub, name: payload.name, email: payload.email, picture: payload.picture, role });
+        })();
         setIsAuthenticated(true);
       } catch (_) {
         setUser(null);
@@ -145,35 +163,60 @@ function App() {
 
 
   // Initialize Socket.io connection
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
+    let createdSocket = null; // track socket created in this effect
     if (isAuthenticated) {
       const initSocket = async () => {
         try {
           const token = localStorage.getItem('google_credential') || '';
-          // Use relative path for socket connection when deployed
-          const socketUrl = process.env.REACT_APP_SOCKET_URL || 
-            (window.location.pathname.startsWith('/scheduler') ? '' : 'http://localhost:3001');
-          
+          // Absolute public base preferred (same as API base). Example:
+          // REACT_APP_PUBLIC_BASE=http://localhost/scheduler or http://PUBLIC_IP/scheduler
+          const publicBase = process.env.REACT_APP_PUBLIC_BASE || (typeof window !== 'undefined' && window.__PUBLIC_BASE__);
+          let socketUrl = '';
+          let socketPath = '/scheduler/socket.io';
+          if (publicBase) {
+            try {
+              const u = new URL(publicBase);
+              socketUrl = `${u.protocol}//${u.host}`;
+              // Ensure scheduler prefix
+              socketPath = `${u.pathname.replace(/\/$/, '')}/socket.io`;
+            } catch (_) {
+              // Fallback to same-origin
+              socketUrl = '';
+              socketPath = '/scheduler/socket.io';
+            }
+          } else {
+            // Same-origin fallback
+            socketUrl = '';
+            socketPath = '/scheduler/socket.io';
+          }
+
+          const transportPref = (localStorage.getItem('socket_transport') || 'polling');
+          const useWebsocket = transportPref === 'websocket';
           const newSocket = io(socketUrl, {
             auth: { token },
-            path: window.location.pathname.startsWith('/scheduler') ? '/scheduler/socket.io' : '/socket.io',
-            transports: ['websocket', 'polling'],
+            path: socketPath,
+            transports: useWebsocket ? ['websocket', 'polling'] : ['polling'],
+            upgrade: useWebsocket,
             reconnectionAttempts: 5,
             reconnectionDelay: 1000,
           });
 
           newSocket.on('connect', () => {
-            console.log('Connected to server');
+            // Connected to server
           });
 
-          newSocket.on('disconnect', (reason) => {
-            console.log('Disconnected:', reason);
+          newSocket.on('disconnect', (_reason) => {
+            // Disconnected from server
           });
 
           newSocket.on('error', (error) => {
             console.error('Socket error:', error);
           });
 
+          // Track this specific socket for cleanup
+          createdSocket = newSocket;
           setSocket(newSocket);
         } catch (error) {
           console.error('Socket initialization error:', error);
@@ -183,10 +226,9 @@ function App() {
       initSocket();
     }
 
+    // Cleanup only the socket created in this effect run
     return () => {
-      if (socket) {
-        socket.disconnect();
-      }
+      try { createdSocket && createdSocket.disconnect(); } catch (_) { /* ignore */ void 0; }
     };
   }, [isAuthenticated]);
 
@@ -277,18 +319,4 @@ function App() {
 }
 
 export default App;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 

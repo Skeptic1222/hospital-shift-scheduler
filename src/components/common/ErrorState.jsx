@@ -1,4 +1,4 @@
-import React from 'react';
+//
 import { Box, Typography, Button, Alert, AlertTitle } from '@mui/material';
 import { Error as ErrorIcon, Refresh as RefreshIcon } from '@mui/icons-material';
 
@@ -177,4 +177,3 @@ export const ErrorBoundaryFallback = ({ error, resetError }) => (
 );
 
 export default ErrorMessage;
-

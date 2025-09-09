@@ -2,7 +2,19 @@ export function getToken() {
   return localStorage.getItem('google_credential') || localStorage.getItem('token') || '';
 }
 
-const API_BASE = (typeof window !== 'undefined' && window.__API_BASE__) || process.env.REACT_APP_API_BASE || '/api';
+// Absolute public base preferred. Example values:
+// - In Windows:  REACT_APP_PUBLIC_BASE=http://localhost/scheduler
+// - In WSL dev:  REACT_APP_PUBLIC_BASE=http://PUBLIC_IP/scheduler
+let API_BASE = process.env.REACT_APP_PUBLIC_BASE || (typeof window !== 'undefined' && window.__PUBLIC_BASE__);
+if (!API_BASE) {
+  // Fallback to same-origin + /scheduler
+  try {
+    const origin = (typeof window !== 'undefined' && window.location && window.location.origin) || '';
+    API_BASE = `${origin}/scheduler`;
+  } catch (_) {
+    API_BASE = '/scheduler';
+  }
+}
 
 export async function apiFetch(path, options = {}) {
   const headers = new Headers(options.headers || {});
@@ -14,7 +26,9 @@ export async function apiFetch(path, options = {}) {
     try {
       localStorage.removeItem('google_credential');
       localStorage.setItem('google_logged_out', '1');
-    } catch (_) {}
+    } catch (_) {
+      // Silently handle localStorage errors
+    }
     window.location.hash = '#/';
     throw new Error('Unauthorized');
   }

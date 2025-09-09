@@ -1,4 +1,4 @@
-import React from 'react';
+//
 import { LinearProgress, Box, Typography } from '@mui/material';
 
 const FatigueIndicator = ({ score = 0, consecutiveDays = 0 }) => (
@@ -10,4 +10,3 @@ const FatigueIndicator = ({ score = 0, consecutiveDays = 0 }) => (
 );
 
 export default FatigueIndicator;
-

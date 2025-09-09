@@ -46,7 +46,9 @@ class RealtimeNotificationSystem {
                 origin: config.allowedOrigins,
                 credentials: true
             },
-            transports: ['websocket', 'polling'],
+            // Force long-polling only to avoid proxy/WebSocket handshake issues behind IIS/ARR
+            transports: ['polling'],
+            allowUpgrades: false,
             pingTimeout: 60000,
             pingInterval: 25000,
             upgradeTimeout: 30000,
@@ -524,14 +526,21 @@ class RealtimeNotificationSystem {
      */
     async startQueueProcessor() {
         setInterval(async () => {
-            const pendingNotifications = await this.getPendingNotifications();
-            
-            for (const notification of pendingNotifications) {
-                if (notification.retry_count < 3) {
-                    await this.retryNotification(notification);
-                } else {
-                    await this.markNotificationAsFailed(notification.id);
+            try {
+                const pendingNotifications = await this.getPendingNotifications();
+                for (const notification of pendingNotifications) {
+                    try {
+                        if (notification.retry_count < 3) {
+                            await this.retryNotification(notification);
+                        } else {
+                            await this.markNotificationAsFailed(notification.id);
+                        }
+                    } catch (innerErr) {
+                        console.error('Notification retry error:', innerErr?.message || innerErr);
+                    }
                 }
+            } catch (err) {
+                console.error('Queue processor error:', err?.message || err);
             }
         }, 30000); // Check every 30 seconds
     }

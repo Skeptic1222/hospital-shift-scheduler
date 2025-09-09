@@ -1,8 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import {
   Box,
-  Card,
-  CardContent,
   Typography,
   List,
   ListItem,
@@ -19,13 +17,11 @@ import {
   Divider,
   Menu,
   MenuItem,
-  Tooltip,
   Alert,
   Checkbox,
   FormControlLabel
 } from '@mui/material';
 import {
-  NotificationsActive as NotificationIcon,
   Schedule as ShiftIcon,
   SwapHoriz as SwapIcon,
   Warning as AlertIcon,
@@ -35,15 +31,11 @@ import {
   MoreVert as MoreIcon,
   Delete as DeleteIcon,
   DoneAll as MarkAllReadIcon,
-  FilterList as FilterIcon,
-  Email as EmailIcon,
-  Sms as SmsIcon,
   LocalHospital as UrgentIcon,
-  Today as TodayIcon,
   AccessTime as TimeIcon
 } from '@mui/icons-material';
 import StandardButton from '../components/common/StandardButton';
-import { LoadingSpinner, CardSkeleton } from '../components/common/LoadingState';
+import { CardSkeleton } from '../components/common/LoadingState';
 import { ErrorMessage } from '../components/common/ErrorState';
 import { formatDistanceToNow } from 'date-fns';
 
@@ -419,7 +411,10 @@ const Notifications = () => {
                         sx={{ mr: 1 }}
                         onClick={() => {
                           // Handle action based on type
-                          console.log('Action:', notification.action, notification.metadata);
+                          if (process.env.NODE_ENV !== 'production') {
+                            // eslint-disable-next-line no-console
+                            console.log('Action:', notification.action, notification.metadata);
+                          }
                         }}
                       >
                         {notification.action === 'viewShift' && 'View'}
@@ -471,4 +466,3 @@ const Notifications = () => {
 };
 
 export default Notifications;
-

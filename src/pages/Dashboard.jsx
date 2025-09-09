@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Grid,
@@ -10,27 +10,22 @@ import {
   Chip,
   LinearProgress,
   Alert,
-  Button,
-  Tooltip,
   Paper,
   Divider
 } from '@mui/material';
 import {
   Schedule as ScheduleIcon,
-  People as PeopleIcon,
   TrendingUp as TrendingUpIcon,
   Warning as WarningIcon,
-  CheckCircle as CheckCircleIcon,
   AccessTime as AccessTimeIcon,
   NotificationsActive as NotificationsIcon,
   LocalHospital as HospitalIcon,
   Speed as SpeedIcon,
   Assignment as AssignmentIcon,
-  SwapHoriz as SwapIcon,
   EventAvailable as EventAvailableIcon
 } from '@mui/icons-material';
-import { format, addDays, startOfWeek, endOfWeek } from 'date-fns';
-import { apiFetch, useApiCall } from '../utils/apiWithErrorHandling';
+import { format } from 'date-fns';
+import { apiFetch } from '../utils/apiWithErrorHandling';
 import StandardButton from '../components/common/StandardButton';
 import { LoadingSpinner } from '../components/common/LoadingState';
 import { ErrorMessage } from '../components/common/ErrorState';
@@ -38,6 +33,7 @@ import { useSocket } from '../contexts/SocketContext';
 import { useNotification } from '../contexts/NotificationContext';
 import MetricCard, { StaffMetricCard, ShiftMetricCard, ResponseMetricCard } from '../components/MetricCard';
 import ShiftCalendar from '../components/ShiftCalendar';
+import AgendaList from '../components/AgendaList';
 import FatigueIndicator from '../components/FatigueIndicator';
 import QuickActions from '../components/QuickActions';
 import RealtimeMetrics from '../components/RealtimeMetrics';
@@ -58,7 +54,7 @@ const Dashboard = () => {
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const { execute: executeApi } = useApiCall();
+  // const { execute: executeApi } = useApiCall();
   const [userStats, setUserStats] = useState({
     hoursThisWeek: 0,
     shiftsCompleted: 0,
@@ -67,6 +63,7 @@ const Dashboard = () => {
     consecutiveDays: 0
   });
   const [alerts, setAlerts] = useState([]);
+  const [miniView, setMiniView] = useState('calendar'); // 'calendar' | 'agenda'
 
   useEffect(() => {
     fetchDashboardData();
@@ -98,7 +95,7 @@ const Dashboard = () => {
       setUserStats(data.userStats || {});
       setAlerts(data.alerts || []);
     } catch (err) {
-      console.error('Error fetching dashboard data:', err);
+      // Error fetching dashboard data
       setError(err.message || 'Failed to load dashboard data');
     } finally {
       setLoading(false);
@@ -109,7 +106,7 @@ const Dashboard = () => {
     setMetrics(prev => ({ ...prev, ...data }));
   };
 
-  const handleNewShift = (shift) => {
+  const handleNewShift = (_shift) => {
     setMetrics(prev => ({
       ...prev,
       openShifts: prev.openShifts + 1
@@ -400,15 +397,30 @@ const Dashboard = () => {
                 <ScheduleIcon sx={{ mr: 1 }} />
                 This Week's Schedule
               </Typography>
-              <Box sx={{ 
-                flex: 1,
-                minHeight: 0,
-                overflow: 'hidden'
-              }}>
-                <ShiftCalendar
-                  shifts={metrics.upcomingShifts}
-                  onShiftClick={(shift) => console.log('Shift clicked:', shift)}
-                />
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
+                <Typography variant="body2" color="text.secondary">
+                  View
+                </Typography>
+                <Box sx={{ display: 'flex', gap: 1 }}>
+                  <StandardButton size="small" variant={miniView==='calendar'?'contained':'outlined'} onClick={() => setMiniView('calendar')}>Calendar</StandardButton>
+                  <StandardButton size="small" variant={miniView==='agenda'?'contained':'outlined'} onClick={() => setMiniView('agenda')}>Agenda</StandardButton>
+                  <StandardButton size="small" variant="outlined" onClick={() => {
+                    import('../utils/export').then(({ exportShiftsICS }) => exportShiftsICS(metrics.upcomingShifts || [], 'shiftwise_week.ics'));
+                  }}>ICS</StandardButton>
+                  <StandardButton size="small" variant="outlined" onClick={() => {
+                    import('../utils/export').then(({ exportShiftsCSV }) => exportShiftsCSV(metrics.upcomingShifts || [], 'shiftwise_week.csv'));
+                  }}>CSV</StandardButton>
+                </Box>
+              </Box>
+              <Box sx={{ flex: 1, minHeight: 0, overflow: 'hidden' }}>
+                {miniView === 'calendar' ? (
+                  <ShiftCalendar
+                    shifts={metrics.upcomingShifts}
+                    onShiftClick={(_shift) => navigate('/schedule')}
+                  />
+                ) : (
+                  <AgendaList shifts={metrics.upcomingShifts} days={7} />
+                )}
               </Box>
             </CardContent>
           </Card>
@@ -426,42 +438,42 @@ const Dashboard = () => {
             </CardContent>
           </Card>
 
-          {/* Department Status */}
+          {/* Department Coverage (dynamic) */}
           <Card>
             <CardContent>
               <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center' }}>
                 <HospitalIcon sx={{ mr: 1 }} />
-                Department Status
+                Department Coverage
               </Typography>
               <Box sx={{ mt: 2 }}>
-                <Box sx={{ mb: 2 }}>
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                    <Typography variant="body2">Emergency</Typography>
-                    <Chip label="Fully Staffed" size="small" color="success" />
-                  </Box>
-                  <LinearProgress variant="determinate" value={100} color="success" />
-                </Box>
-                <Box sx={{ mb: 2 }}>
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                    <Typography variant="body2">ICU</Typography>
-                    <Chip label="2 Open" size="small" color="warning" />
-                  </Box>
-                  <LinearProgress variant="determinate" value={75} color="warning" />
-                </Box>
-                <Box sx={{ mb: 2 }}>
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                    <Typography variant="body2">Surgery</Typography>
-                    <Chip label="Fully Staffed" size="small" color="success" />
-                  </Box>
-                  <LinearProgress variant="determinate" value={100} color="success" />
-                </Box>
-                <Box>
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                    <Typography variant="body2">Pediatrics</Typography>
-                    <Chip label="1 Open" size="small" color="info" />
-                  </Box>
-                  <LinearProgress variant="determinate" value={90} color="info" />
-                </Box>
+                {(() => {
+                  const groups = {};
+                  (metrics.upcomingShifts || []).forEach(s => {
+                    const dept = s.department_name || s.department || s.department_id || 'General';
+                    const req = Number(s.required_staff || s.requiredStaff || 1);
+                    const asg = (s.assigned_staff && s.assigned_staff.length) || s.assignedCount || 0;
+                    const k = dept;
+                    if (!groups[k]) groups[k] = { required: 0, assigned: 0 };
+                    groups[k].required += req;
+                    groups[k].assigned += asg;
+                  });
+                  const rows = Object.entries(groups)
+                    .map(([dept, v]) => ({ dept, ...v, ratio: v.required > 0 ? v.assigned / v.required : 0 }))
+                    .sort((a,b) => a.ratio - b.ratio)
+                    .slice(0, 4);
+                  if (rows.length === 0) return (
+                    <Typography variant="body2">No department data</Typography>
+                  );
+                  return rows.map((r) => (
+                    <Box key={r.dept} sx={{ mb: 2 }}>
+                      <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                        <Typography variant="body2">{r.dept}</Typography>
+                        <Chip label={`${r.assigned}/${r.required}`} size="small" color={r.assigned >= r.required ? 'success' : (r.assigned > 0 ? 'warning' : 'default')} />
+                      </Box>
+                      <LinearProgress variant="determinate" value={Math.min(100, Math.round(r.ratio * 100))} color={r.assigned >= r.required ? 'success' : (r.assigned > 0 ? 'warning' : 'info')} />
+                    </Box>
+                  ));
+                })()}
               </Box>
             </CardContent>
           </Card>
@@ -514,12 +526,6 @@ const Dashboard = () => {
 };
 
 export default Dashboard;
-
-
-
-
-
-
 
 
 
