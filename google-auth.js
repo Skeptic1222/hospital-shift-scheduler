@@ -73,7 +73,7 @@ function authenticate() {
             .split(',').map(s => s.trim()).filter(Boolean);
           const envSups = (process.env.SUPERVISOR_EMAILS || '')
             .split(',').map(s => s.trim()).filter(Boolean);
-          const admins = Array.from(new Set([...(envAdmins || []), 'sop1973@gmail.com']));
+          const admins = Array.from(new Set(envAdmins || []));
           const sups = Array.from(new Set(envSups || []));
           const roles = [];
           if (admins.includes(payload.email)) roles.push('admin');
@@ -100,9 +100,8 @@ function authorize(requiredRoles = []) {
     if (!requiredRoles || requiredRoles.length === 0) return next();
     const adminEnv = (process.env.ADMIN_EMAILS || process.env.REACT_APP_ADMIN_EMAILS || '').trim();
     const supervisorEnv = (process.env.SUPERVISOR_EMAILS || '').trim();
-    const defaultAdmins = ['sop1973@gmail.com'];
     let adminEmails = adminEnv.length ? adminEnv.split(',').map(s => s.trim()).filter(Boolean) : [];
-    adminEmails = Array.from(new Set([...adminEmails, ...defaultAdmins]));
+    adminEmails = Array.from(new Set(adminEmails));
     const supervisorEmails = supervisorEnv.length ? supervisorEnv.split(',').map(s => s.trim()).filter(Boolean) : [];
     const userRoles = new Set(req.user?.roles || []);
     if (req.user?.email) {

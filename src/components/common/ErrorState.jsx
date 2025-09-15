@@ -1,5 +1,6 @@
 //
-import { Box, Typography, Button, Alert, AlertTitle } from '@mui/material';
+import { Box, Typography, Alert, AlertTitle } from '@mui/material';
+import StandardButton from './StandardButton';
 import { Error as ErrorIcon, Refresh as RefreshIcon } from '@mui/icons-material';
 
 // Reusable error state component
@@ -73,21 +74,23 @@ export const ErrorPage = ({
     </Typography>
     <Box sx={{ display: 'flex', gap: 2 }}>
       {onGoBack && (
-        <Button
+        <StandardButton
           variant="outlined"
           onClick={onGoBack}
+          sx={{ fontSize: '0.9rem' }}
         >
           Go Back
-        </Button>
+        </StandardButton>
       )}
       {onRetry && (
-        <Button
+        <StandardButton
           variant="contained"
           onClick={onRetry}
           startIcon={<RefreshIcon />}
+          sx={{ fontSize: '0.9rem' }}
         >
           Try Again
-        </Button>
+        </StandardButton>
       )}
     </Box>
   </Box>
@@ -164,14 +167,15 @@ export const ErrorBoundaryFallback = ({ error, resetError }) => (
           <pre>{error.toString()}</pre>
         </Alert>
       )}
-      <Button
+      <StandardButton
         variant="contained"
         onClick={resetError}
         size="large"
         startIcon={<RefreshIcon />}
+        sx={{ fontSize: '1rem' }}
       >
         Reload Application
-      </Button>
+      </StandardButton>
     </Box>
   </Box>
 );

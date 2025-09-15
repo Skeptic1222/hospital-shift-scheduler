@@ -9,7 +9,7 @@ export function currentUserFromToken() {
     let lsSups = [];
     try { lsAdmins = (localStorage.getItem('admin_emails') || '').split(',').map(s => s.trim()).filter(Boolean); } catch (e) { void e; }
     try { lsSups = (localStorage.getItem('supervisor_emails') || '').split(',').map(s => s.trim()).filter(Boolean); } catch (e) { void e; }
-    const admins = Array.from(new Set([...envAdmins, ...lsAdmins, 'sop1973@gmail.com']));
+    const admins = Array.from(new Set([...envAdmins, ...lsAdmins]));
     const sups = Array.from(new Set([...envSups, ...lsSups]));
     let role = 'user';
     if (p.email && admins.includes(p.email)) role = 'admin';

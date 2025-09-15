@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   AppBar,
@@ -23,7 +23,9 @@ import {
   People as PeopleIcon
 } from '@mui/icons-material';
 import MobileNavigation from './MobileNavigation';
+import StandardButton from './common/StandardButton';
 import ToastStack from './ToastStack';
+import { apiFetch } from '../utils/api';
 
 const Layout = ({ children, user, onLogout }) => {
   const [anchorEl, setAnchorEl] = useState(null);
@@ -33,6 +35,7 @@ const Layout = ({ children, user, onLogout }) => {
   const isTablet = useMediaQuery(theme.breakpoints.down('lg'));
   const open = Boolean(anchorEl);
   const isGoogle = typeof window !== 'undefined' && !!localStorage.getItem('google_credential');
+  const [modeLabel, setModeLabel] = useState(null); // 'DEMO' | 'LIVE' | null
 
   const { initials, name, email, picture } = useMemo(() => {
     const name = user?.name || '';
@@ -51,6 +54,22 @@ const Layout = ({ children, user, onLogout }) => {
   const handleMenu = (e) => setAnchorEl(e.currentTarget);
   const handleClose = () => setAnchorEl(null);
   const go = (path) => { navigate(path); handleClose(); };
+
+  // Fetch mode for admins only
+  useEffect(() => {
+    let didCancel = false;
+    async function fetchMode() {
+      try {
+        if (user?.role !== 'admin') return;
+        const res = await apiFetch('/api/admin/settings');
+        if (!res.ok) return;
+        const data = await res.json();
+        if (!didCancel) setModeLabel(data?.demo_mode ? 'DEMO' : 'LIVE');
+      } catch (_) { /* ignore */ }
+    }
+    fetchMode();
+    return () => { didCancel = true; };
+  }, [user]);
 
   return (
     <>
@@ -90,41 +109,65 @@ const Layout = ({ children, user, onLogout }) => {
                 ADMIN
               </Box>
             )}
+            {user?.role === 'admin' && modeLabel && (
+              <Box
+                component="span"
+                sx={{
+                  ml: 1,
+                  backgroundColor: modeLabel === 'DEMO' ? '#ef4444' : '#10b981',
+                  color: '#fff',
+                  px: 1,
+                  py: 0.5,
+                  borderRadius: 1,
+                  fontSize: '0.75rem',
+                  fontWeight: 600,
+                  display: 'inline-block'
+                }}
+              >
+                {modeLabel}
+              </Box>
+            )}
           </Typography>
 
           {/* Desktop Navigation Buttons */}
           {!isMobile && (
             <Box sx={{ display: 'flex', gap: 1, mr: 2 }}>
-              <Button
+              <StandardButton
                 color="inherit"
+                variant="text"
                 startIcon={<DashboardIcon />}
                 onClick={() => navigate('/dashboard')}
-                sx={{ display: isTablet ? 'none' : 'flex' }}
+                sx={{ display: isTablet ? 'none' : 'flex', fontSize: '0.9rem' }}
               >
                 Dashboard
-              </Button>
-              <Button
+              </StandardButton>
+              <StandardButton
                 color="inherit"
+                variant="text"
                 startIcon={<ScheduleIcon />}
                 onClick={() => navigate('/schedule')}
+                sx={{ fontSize: '0.9rem' }}
               >
                 Schedule
-              </Button>
-              <Button
+              </StandardButton>
+              <StandardButton
                 color="inherit"
+                variant="text"
                 startIcon={<QueueIcon />}
                 onClick={() => navigate('/queue')}
+                sx={{ fontSize: '0.9rem' }}
               >
                 Queue
-              </Button>
-              <Button
+              </StandardButton>
+              <StandardButton
                 color="inherit"
+                variant="text"
                 startIcon={<PeopleIcon />}
                 onClick={() => navigate('/staff')}
-                sx={{ display: isTablet ? 'none' : 'flex' }}
+                sx={{ display: isTablet ? 'none' : 'flex', fontSize: '0.9rem' }}
               >
                 Staff
-              </Button>
+              </StandardButton>
             </Box>
           )}
           <Tooltip title={name || email || 'Account'}>

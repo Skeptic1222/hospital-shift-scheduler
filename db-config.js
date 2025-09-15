@@ -405,7 +405,8 @@ const repositories = {
     hospitals: null,
     assignments: null,
     notifications: null,
-    auditLog: null
+    auditLog: null,
+    pushSubscriptions: null
 };
 
 // Initialize repositories when connected
@@ -417,6 +418,7 @@ db.initializeRepositories = function initializeRepositories() {
     repositories.assignments = new Repository(db, 'shift_assignments');
     repositories.notifications = new Repository(db, 'notifications');
     repositories.auditLog = new Repository(db, 'audit_log', 'audit');
+    repositories.pushSubscriptions = new Repository(db, 'push_subscriptions');
 };
 
 module.exports = {

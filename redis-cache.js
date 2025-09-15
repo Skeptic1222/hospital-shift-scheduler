@@ -63,6 +63,7 @@ class RedisCacheService {
         this.keyPatterns = {
             session: 'session:{userId}',
             user: 'user:{userId}',
+            user_settings: 'user_settings:{userId}',
             shift: 'shift:{shiftId}',
             schedule: 'schedule:{hospitalId}:{departmentId}:{date}',
             queue: 'queue:{openShiftId}',

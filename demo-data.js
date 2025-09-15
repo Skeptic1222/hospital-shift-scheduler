@@ -168,8 +168,47 @@ module.exports = {
   listShifts,
   createShift,
   assignToShift,
-  updateShift
+  updateShift,
+  upsertStaff
 };
+
+// Helpers for admin upsert in demo mode
+function upsertStaff({ email, first_name, last_name, department_code, roleName }) {
+  ensureSeeded();
+  const idx = staffStore.findIndex(s => (s.email || '').toLowerCase() === String(email || '').toLowerCase());
+  const dept = departments.find(d => d.code === department_code);
+  if (idx >= 0) {
+    // Update existing
+    const existing = staffStore[idx];
+    staffStore[idx] = {
+      ...existing,
+      first_name: (first_name || existing.first_name || ''),
+      last_name: (last_name || existing.last_name || ''),
+      name: `${first_name || existing.first_name || ''} ${last_name || existing.last_name || ''}`.trim() || existing.name,
+      department_code: dept ? dept.code : existing.department_code,
+      department_name: dept ? dept.name : existing.department_name,
+      title: roleName ? roleName : existing.title
+    };
+    return { upserted: false, user: staffStore[idx] };
+  } else {
+    const id = uuidv4();
+    const fn = first_name || (email ? email.split('@')[0] : 'User');
+    const ln = last_name || '';
+    const user = {
+      id,
+      first_name: fn,
+      last_name: ln,
+      name: `${fn} ${ln}`.trim(),
+      email,
+      title: roleName || 'user',
+      department_code: dept ? dept.code : undefined,
+      department_name: dept ? dept.name : undefined,
+      notes: ''
+    };
+    staffStore.unshift(user);
+    return { upserted: true, user };
+  }
+}
 
 
 

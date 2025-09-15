@@ -4,9 +4,11 @@ const cors = require('cors');
 const helmet = require('helmet');
 const compression = require('compression');
 const rateLimit = require('express-rate-limit');
+const { body, param, query, validationResult } = require('express-validator');
 const http = require('http');
 const path = require('path');
 require('dotenv').config();
+const createApiRouters = require('./routes');
 
 // Import services
 const { db, repositories } = require('./db-config');
@@ -15,13 +17,14 @@ const RedisCacheService = require('./redis-cache');
 const FCFSScheduler = require('./fcfs-algorithm');
 const RealtimeNotificationSystem = require('./realtime-notifications');
 const demo = require('./demo-data');
+const HIPAAAuditLogger = require('./hipaa-audit');
 
 // Initialize Express app
 const app = express();
 const server = http.createServer(app);
 
 // Initialize services
-// Auth0 removed
+// Google Authentication is the primary auth method
 
 // Behind IIS/ARR, trust the first proxy (safer than 'true')
 // Can be overridden with TRUST_PROXY env (e.g., 'loopback')
@@ -65,10 +68,7 @@ const notificationSystem = new RealtimeNotificationSystem(server, {
         privateKey: process.env.VAPID_PRIVATE_KEY
     },
     allowedOrigins: process.env.ALLOWED_ORIGINS?.split(',') || ['http://localhost:3000'],
-    auth0: {
-        domain: process.env.AUTH0_DOMAIN,
-        audience: process.env.AUTH0_AUDIENCE
-    },
+    // Google auth is primary - no Auth0 config needed
     rolePermissions: {
         admin: ['all'],
         manager: ['view_all', 'edit_schedules', 'approve_shifts', 'view_reports', 'view_metrics', 'view_shifts'],
@@ -79,6 +79,35 @@ const notificationSystem = new RealtimeNotificationSystem(server, {
 });
 
 const fcfsScheduler = new FCFSScheduler(db, cacheService.client, notificationSystem);
+
+// Demo mode override (runtime). If null, fall back to env SKIP_EXTERNALS
+let demoOverride = null; // true => force demo, false => force live, null => env controls
+function isDemo() {
+  return demoOverride === true ? true : (demoOverride === false ? false : (process.env.SKIP_EXTERNALS === 'true'));
+}
+function setDemoOverride(v) {
+  if (v === true) demoOverride = true; else if (v === false) demoOverride = false; else demoOverride = null;
+}
+
+// Demo-only stores
+const demoPushSubscriptions = new Map(); // userId -> subscription
+
+// Validation helper
+function validate(rules) {
+  return [
+    ...rules,
+    (req, res, next) => {
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        return res.status(400).json({
+          error: 'VALIDATION_ERROR',
+          details: errors.array().map(e => ({ field: e.param, message: e.msg }))
+        });
+      }
+      next();
+    }
+  ];
+}
 
 // -----------------------------------------------------
 // PWA Icon helper endpoint (avoids 404s for manifest icons)
@@ -191,6 +220,15 @@ if (process.env.NODE_ENV === 'production') {
     app.use(express.static(path.join(__dirname, 'build')));
 }
 
+// Mount modular API routers early so they take precedence over legacy inline routes
+const deps = { googleAuth, repositories, db, cacheService, notificationSystem, fcfsScheduler, demo };
+// expose validators and shared middlewares
+Object.assign(deps, { validate, body, param });
+deps.ensureUserAndRoles = ensureUserAndRoles;
+deps.isDemo = isDemo;
+deps.setDemoOverride = setDemoOverride;
+app.use('/api', createApiRouters(deps));
+
 // Health check endpoint
 app.get('/api/health', async (req, res) => {
     try {
@@ -220,7 +258,9 @@ app.get('/api/health', async (req, res) => {
 // AUTHENTICATION ENDPOINTS
 // =====================================================
 
-app.post('/api/auth/login', (req, res) => res.status(501).json({ error: 'Not Implemented' }));
+// Google authentication endpoint
+app.post('/api/auth/login', googleAuth.handleGoogleAuth);
+app.post('/api/auth/google', googleAuth.handleGoogleAuth); // Alias for Google-specific auth
 
 app.post('/api/auth/refresh', googleAuth.authenticate(), async (req, res) => {
     try {
@@ -286,7 +326,18 @@ app.get('/api/shifts', googleAuth.authenticate(), async (req, res) => {
     }
 });
 
-app.post('/api/shifts', googleAuth.authenticate(), ensureUserAndRoles, googleAuth.authorize(['admin','supervisor']), async (req, res) => {
+app.post(
+  '/api/shifts',
+  googleAuth.authenticate(),
+  ensureUserAndRoles,
+  googleAuth.authorize(['admin','supervisor']),
+  validate([
+    body('date').optional().isISO8601().withMessage('date must be ISO8601'),
+    body('start_time').optional().matches(/^\d{2}:\d{2}(:\d{2})?$/).withMessage('start_time must be HH:mm or HH:mm:ss'),
+    body('end_time').optional().matches(/^\d{2}:\d{2}(:\d{2})?$/).withMessage('end_time must be HH:mm or HH:mm:ss'),
+    body('required_staff').optional().isInt({ min: 1 }).withMessage('required_staff must be >= 1')
+  ]),
+  async (req, res) => {
     try {
         if (process.env.SKIP_EXTERNALS === 'true') {
             const body = req.body || {};
@@ -330,7 +381,19 @@ app.post('/api/shifts', googleAuth.authenticate(), ensureUserAndRoles, googleAut
 });
 
 // Update shift (admin/supervisor)
-app.put('/api/shifts/:id', googleAuth.authenticate(), ensureUserAndRoles, googleAuth.authorize(['admin','supervisor']), async (req, res) => {
+app.put(
+  '/api/shifts/:id',
+  googleAuth.authenticate(),
+  ensureUserAndRoles,
+  googleAuth.authorize(['admin','supervisor']),
+  validate([
+    param('id').notEmpty().withMessage('id required'),
+    body('date').optional().isISO8601().withMessage('date must be ISO8601'),
+    body('start_time').optional().matches(/^\d{2}:\d{2}(:\d{2})?$/).withMessage('start_time must be HH:mm or HH:mm:ss'),
+    body('end_time').optional().matches(/^\d{2}:\d{2}(:\d{2})?$/).withMessage('end_time must be HH:mm or HH:mm:ss'),
+    body('status').optional().isIn(['open','partial','filled','cancelled']).withMessage('invalid status')
+  ]),
+  async (req, res) => {
   try {
     const id = req.params.id;
     if (process.env.SKIP_EXTERNALS === 'true') {
@@ -355,7 +418,16 @@ app.put('/api/shifts/:id', googleAuth.authenticate(), ensureUserAndRoles, google
 });
 
 // Register DB-backed assignment handler before legacy handler so it runs first
-app.post('/api/shifts/assign', googleAuth.authenticate(), ensureUserAndRoles, googleAuth.authorize(['admin','supervisor']), async (req, res) => {
+app.post(
+  '/api/shifts/assign',
+  googleAuth.authenticate(),
+  ensureUserAndRoles,
+  googleAuth.authorize(['admin','supervisor']),
+  validate([
+    body('shift_id').notEmpty().withMessage('shift_id required'),
+    body('user_id').notEmpty().withMessage('user_id required')
+  ]),
+  async (req, res) => {
   try {
     const { shift_id, user_id } = req.body || {};
     if (!shift_id || !user_id) return res.status(400).json({ error: 'shift_id and user_id required' });
@@ -379,7 +451,15 @@ app.post('/api/shifts/assign', googleAuth.authenticate(), ensureUserAndRoles, go
   } catch (e) { return res.status(500).json({ error: 'Failed to assign' }); }
 });
 
-app.post('/api/shifts/assign', googleAuth.authenticate(), googleAuth.authorize(['admin','supervisor']), async (req, res) => {
+app.post(
+  '/api/shifts/assign',
+  googleAuth.authenticate(),
+  googleAuth.authorize(['admin','supervisor']),
+  validate([
+    body('shift_id').notEmpty().withMessage('shift_id required'),
+    body('user_id').notEmpty().withMessage('user_id required')
+  ]),
+  async (req, res) => {
   try {
     const { shift_id, user_id } = req.body || {};
     if (!shift_id || !user_id) return res.status(400).json({ error: 'shift_id and user_id required' });
@@ -393,54 +473,87 @@ app.post('/api/shifts/assign', googleAuth.authenticate(), googleAuth.authorize([
 // FCFS QUEUE ENDPOINTS
 // =====================================================
 
-app.post('/api/queue/open-shift', googleAuth.authenticate(), googleAuth.authorize(['admin','supervisor']), async (req, res) => {
+app.post(
+  '/api/queue/open-shift',
+  googleAuth.authenticate(),
+  googleAuth.authorize(['admin','supervisor']),
+  validate([
+    body('shift_id').notEmpty().withMessage('shift_id required'),
+    body('reason').optional().isString(),
+    body('urgency_level').optional().isInt({ min: 1, max: 5 }),
+    body('expires_in_hours').optional().isInt({ min: 1 })
+  ]),
+  async (req, res) => {
     try {
-        if (process.env.SKIP_EXTERNALS === 'true') {
-            return res.json({ success: true, openShiftId: 'mock-open-' + Date.now(), queueSize: 0, firstWindowStart: new Date().toISOString() });
-        }
-        const { shift_id, reason, urgency_level, expires_in_hours } = req.body;
-        
-        const result = await fcfsScheduler.postOpenShift({
-            shiftId: shift_id,
-            requestedBy: req.user.sub,
-            reason,
-            urgencyLevel: urgency_level,
-            expiresInHours: expires_in_hours
-        });
-        
-        res.json(result);
-    } catch (error) {
-        console.error('Post open shift error:', error);
-        res.status(500).json({ error: 'Failed to post open shift' });
-    }
-});
+      if (process.env.SKIP_EXTERNALS === 'true') {
+        return res.json({ success: true, openShiftId: 'mock-open-' + Date.now(), queueSize: 0, firstWindowStart: new Date().toISOString() });
+      }
+      const { shift_id, reason, urgency_level, expires_in_hours } = req.body;
 
-app.post('/api/queue/respond', googleAuth.authenticate(), async (req, res) => {
-    try {
-        if (process.env.SKIP_EXTERNALS === 'true') { return res.json({ success: true, response: req.body?.response || 'accepted' }); }
-        const { queue_entry_id, response } = req.body;
-        
-        const result = await fcfsScheduler.respondToShiftOffer({
-            queueEntryId: queue_entry_id,
-            userId: req.user.sub,
-            response
-        });
-        
-        res.json(result);
+      const result = await fcfsScheduler.postOpenShift({
+        shiftId: shift_id,
+        requestedBy: req.user.sub,
+        reason,
+        urgencyLevel: urgency_level,
+        expiresInHours: expires_in_hours
+      });
+
+      res.json(result);
     } catch (error) {
-        console.error('Queue response error:', error);
-        res.status(500).json({ error: 'Failed to respond to shift offer' });
+      console.error('Post open shift error:', error);
+      res.status(500).json({ error: 'Failed to post open shift' });
     }
-});
+  }
+);
+
+app.post(
+  '/api/queue/respond',
+  googleAuth.authenticate(),
+  validate([
+    body('queue_entry_id').notEmpty().withMessage('queue_entry_id required'),
+    body('response').isIn(['accepted','declined']).withMessage('response must be accepted or declined')
+  ]),
+  async (req, res) => {
+    try {
+      if (process.env.SKIP_EXTERNALS === 'true') { return res.json({ success: true, response: req.body?.response || 'accepted' }); }
+      const { queue_entry_id, response } = req.body;
+
+      const result = await fcfsScheduler.respondToShiftOffer({
+        queueEntryId: queue_entry_id,
+        userId: req.user.sub,
+        response
+      });
+
+      res.json(result);
+    } catch (error) {
+      console.error('Queue response error:', error);
+      res.status(500).json({ error: 'Failed to respond to shift offer' });
+    }
+  }
+);
 
 app.get('/api/queue/status/:openShiftId', googleAuth.authenticate(), async (req, res) => {
-    try {
-        const status = await fcfsScheduler.getQueueStatus(req.params.openShiftId);
-        res.json(status);
-    } catch (error) {
-        console.error('Queue status error:', error);
-        res.status(500).json({ error: 'Failed to get queue status' });
+  try {
+    if (process.env.SKIP_EXTERNALS === 'true') {
+      const now = new Date();
+      const windowEnd = new Date(now.getTime() + 15 * 60 * 1000);
+      return res.json({
+        queue_size: 5,
+        current_window: {
+          user: 'Demo Nurse',
+          position: 1,
+          expires_at: windowEnd.toISOString()
+        },
+        your_position: 3,
+        estimated_wait: 30
+      });
     }
+    const status = await fcfsScheduler.getQueueStatus(req.params.openShiftId);
+    res.json(status);
+  } catch (error) {
+    console.error('Queue status error:', error);
+    res.status(500).json({ error: 'Failed to get queue status' });
+  }
 });
 
 // =====================================================
@@ -477,6 +590,18 @@ app.get('/api/staff', googleAuth.authenticate(), async (req, res) => {
   } catch (e) { return res.status(500).json({ error: 'Failed to load staff' }); }
 });
 
+// Departments list (for admin UI)
+app.get('/api/departments', googleAuth.authenticate(), async (req, res) => {
+  try {
+    if (process.env.SKIP_EXTERNALS === 'true' || !db.connected) {
+      const list = (demo.departments || []).map(d => ({ id: d.code, code: d.code, name: d.name }));
+      return res.json({ departments: list });
+    }
+    const rs = await repositories.departments.findAll({}, { orderBy: 'name ASC' });
+    return res.json({ departments: rs || [] });
+  } catch (e) { return res.status(500).json({ error: 'Failed to load departments' }); }
+});
+
 app.get('/api/oncall', googleAuth.authenticate(), async (req, res) => {
   try {
     const view = (req.query.view || 'day').toLowerCase();
@@ -493,14 +618,24 @@ app.get('/api/oncall', googleAuth.authenticate(), async (req, res) => {
   } catch (e) { return res.status(500).json({ error: 'Failed to load on-call' }); }
 });
 
-app.post('/api/oncall', googleAuth.authenticate(), googleAuth.authorize(['admin','supervisor']), async (req, res) => {
-  try {
-    const { date, department, userId, notes } = req.body || {};
-    if (!date || !department || !userId) return res.status(400).json({ error: 'date, department, userId required' });
-    if (process.env.SKIP_EXTERNALS === 'true') { demo.setOnCall({ date, department, userId, notes }); return res.json({ saved: true }); }
-    return res.status(501).json({ error: 'Not Implemented' });
-  } catch (e) { return res.status(500).json({ error: 'Failed to save on-call' }); }
-});
+app.post(
+  '/api/oncall',
+  googleAuth.authenticate(),
+  googleAuth.authorize(['admin','supervisor']),
+  validate([
+    body('date').notEmpty().isISO8601().withMessage('date required (ISO8601)'),
+    body('department').notEmpty().withMessage('department required'),
+    body('userId').notEmpty().withMessage('userId required')
+  ]),
+  async (req, res) => {
+    try {
+      const { date, department, userId, notes } = req.body || {};
+      if (!date || !department || !userId) return res.status(400).json({ error: 'date, department, userId required' });
+      if (process.env.SKIP_EXTERNALS === 'true') { demo.setOnCall({ date, department, userId, notes }); return res.json({ saved: true }); }
+      return res.status(501).json({ error: 'Not Implemented' });
+    } catch (e) { return res.status(500).json({ error: 'Failed to save on-call' }); }
+  }
+);
 // =====================================================
 // NOTIFICATION ENDPOINTS
 // =====================================================
@@ -551,6 +686,51 @@ app.put('/api/notifications/:id/read', googleAuth.authenticate(), async (req, re
         res.status(500).json({ error: 'Failed to mark notification as read' });
     }
 });
+
+// Subscribe to push notifications (demo mode only for now)
+app.post(
+  '/api/notifications/subscribe',
+  googleAuth.authenticate(),
+  validate([
+    body('subscription').isObject().withMessage('subscription object required'),
+    body('types').optional().isArray().withMessage('types must be an array')
+  ]),
+  async (req, res) => {
+    try {
+      if (process.env.SKIP_EXTERNALS === 'true' || !db.connected) {
+        demoPushSubscriptions.set(req.user.sub, req.body.subscription);
+        return res.json({ subscribed: true, mode: 'demo' });
+      }
+      const sub = req.body.subscription || {};
+      const endpoint = String(sub.endpoint || '').slice(0, 2000);
+      const p256dh = String(sub.keys?.p256dh || '').slice(0, 512);
+      const auth = String(sub.keys?.auth || '').slice(0, 256);
+      if (!endpoint || !p256dh || !auth) return res.status(400).json({ error: 'Invalid subscription' });
+      // Upsert by user+endpoint
+      const existing = await db.query(
+        'SELECT TOP 1 id FROM scheduler.push_subscriptions WHERE user_id=@uid AND endpoint=@endpoint',
+        { uid: req.user.sub, endpoint }
+      );
+      if (existing.recordset && existing.recordset.length) {
+        await repositories.pushSubscriptions.update(existing.recordset[0].id, {
+          p256dh, auth, user_agent: req.headers['user-agent'] || null, is_active: 1
+        });
+      } else {
+        await repositories.pushSubscriptions.create({
+          user_id: req.user.sub,
+          endpoint,
+          p256dh,
+          auth,
+          user_agent: req.headers['user-agent'] || null,
+          is_active: 1
+        });
+      }
+      return res.json({ subscribed: true, mode: 'live' });
+    } catch (e) {
+      return res.status(500).json({ error: 'Failed to subscribe' });
+    }
+  }
+);
 
 // =====================================================
 // ANALYTICS ENDPOINTS
@@ -753,20 +933,67 @@ app.post('/api/admin/roles/seed', googleAuth.authenticate(), googleAuth.authoriz
 });
 
 // Assign role to user by email
-app.post('/api/admin/users/assign-role', googleAuth.authenticate(), googleAuth.authorize(['admin']), async (req, res) => {
-  try {
-    const { email, roleName, hospital_id } = req.body || {};
-    if (!email || !roleName) return res.status(400).json({ error: 'email and roleName required' });
-    if (process.env.SKIP_EXTERNALS === 'true' || !db.connected) {
-      return res.json({ updated: true });
+app.post(
+  '/api/admin/users/assign-role',
+  googleAuth.authenticate(),
+  googleAuth.authorize(['admin']),
+  validate([
+    body('email').isEmail().withMessage('valid email required'),
+    body('roleName').notEmpty().withMessage('roleName required')
+  ]),
+  async (req, res) => {
+    try {
+      const { email, roleName, hospital_id } = req.body || {};
+      if (!email || !roleName) return res.status(400).json({ error: 'email and roleName required' });
+      if (process.env.SKIP_EXTERNALS === 'true' || !db.connected) {
+        return res.json({ updated: true, upserted: true });
+      }
+      const roleRs = await db.query(
+        "SELECT TOP 1 id FROM scheduler.roles WHERE name=@name AND (@hid IS NULL OR hospital_id=@hid)",
+        { name: roleName, hid: hospital_id || null }
+      );
+      if (!roleRs.recordset || roleRs.recordset.length === 0) return res.status(404).json({ error: 'Role not found' });
+      const roleId = roleRs.recordset[0].id;
+
+      // Check if user exists
+      const uRs = await db.query("SELECT TOP 1 id FROM scheduler.users WHERE email=@email", { email });
+      let userId = uRs.recordset && uRs.recordset[0] && uRs.recordset[0].id;
+      if (!userId) {
+        // Create minimal user record
+        const [first, domainPart] = email.split('@');
+        const [firstNameDefault, ...restDefault] = (first || '').split(/[._-]/).filter(Boolean);
+        const lastNameDefault = restDefault.join(' ') || '';
+        const firstName = (req.body.first_name || req.body.firstName || '').trim() || firstNameDefault || first || email;
+        const lastName = (req.body.last_name || req.body.lastName || '').trim() || lastNameDefault;
+        const employee_id = email.replace(/[^A-Za-z0-9_-]/g, '').slice(0, 50);
+        const newUser = {
+          employee_id,
+          email,
+          first_name: firstName,
+          last_name: lastName,
+          is_active: 1,
+          last_login: new Date()
+        };
+        // optional department
+        if (req.body.department_id) newUser.department_id = req.body.department_id;
+        else if (req.body.department_code) {
+          try {
+            const dRs = await db.query('SELECT TOP 1 id FROM scheduler.departments WHERE code=@code', { code: req.body.department_code });
+            if (dRs.recordset && dRs.recordset.length) newUser.department_id = dRs.recordset[0].id;
+          } catch (_) {}
+        }
+        const created = await repositories.users.create(newUser);
+        userId = created.id;
+      }
+      // Assign role
+      await db.query("UPDATE scheduler.users SET role_id=@roleId WHERE id=@id", { roleId, id: userId });
+      return res.json({ updated: true, upserted: true });
+    } catch (e) {
+      return res.status(500).json({ error: 'Failed to assign role' });
     }
-    const roleRs = await db.query("SELECT TOP 1 id FROM scheduler.roles WHERE name=@name AND (@hid IS NULL OR hospital_id=@hid)", { name: roleName, hid: hospital_id || null });
-    if (!roleRs.recordset || roleRs.recordset.length === 0) return res.status(404).json({ error: 'Role not found' });
-    const roleId = roleRs.recordset[0].id;
-    await db.query("UPDATE scheduler.users SET role_id=@roleId WHERE email=@email", { roleId, email });
-    return res.json({ updated: true });
-  } catch (e) { return res.status(500).json({ error: 'Failed to assign role' }); }
-});// SERVER STARTUP
+  }
+);
+// SERVER STARTUP
 // =====================================================
 
 const PORT = process.env.PORT || 3001;

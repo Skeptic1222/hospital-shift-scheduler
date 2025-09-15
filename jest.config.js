@@ -10,4 +10,9 @@ module.exports = {
   transformIgnorePatterns: [
     '/node_modules/(?!(@mui|@testing-library)/)'
   ],
+  testTimeout: 10000,
+  maxWorkers: 1,
+  watchman: false,
+  forceExit: true,
+  detectOpenHandles: false
 };

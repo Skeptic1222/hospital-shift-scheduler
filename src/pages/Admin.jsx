@@ -25,6 +25,10 @@ const Admin = () => {
   const [roles, setRoles] = useState([]);
   const [email, setEmail] = useState('');
   const [roleName, setRoleName] = useState('supervisor');
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [departments, setDepartments] = useState([]);
+  const [department, setDepartment] = useState('');
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState('');
   const [seedBusy, setSeedBusy] = useState(false);
@@ -33,10 +37,14 @@ const Admin = () => {
   const [filtered, setFiltered] = useState([]);
   const [query, setQuery] = useState('');
   const [updatingUser, setUpdatingUser] = useState('');
+  const [demoMode, setDemoMode] = useState(null);
+  const [settingsBusy, setSettingsBusy] = useState(false);
   const { add: addToast } = useNotification();
 
   useEffect(() => { if (isAdmin) loadRoles(); }, [isAdmin]);
   useEffect(() => { if (isAdmin) loadUsers(); }, [isAdmin]);
+  useEffect(() => { if (isAdmin) loadDepartments(); }, [isAdmin]);
+  useEffect(() => { if (isAdmin) loadSettings(); }, [isAdmin]);
 
   async function loadRoles() {
     try {
@@ -62,11 +70,66 @@ const Admin = () => {
     try {
       setBusy(true); setMessage(''); setMessageType('info');
       const { apiFetch } = await import('../utils/api');
-      const res = await apiFetch('/api/admin/users/assign-role', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email, roleName }) });
-      if (res.ok) { setMessage('Role assigned successfully'); setMessageType('success'); setEmail(''); }
+      const payload = { email, roleName, first_name: firstName, last_name: lastName };
+      if (department) {
+        // if selection is a UUID-like id, pass department_id; otherwise department_code
+        if (/^[0-9a-fA-F-]{32,}$/.test(department)) payload.department_id = department;
+        else payload.department_code = department;
+      }
+      const res = await apiFetch('/api/admin/users/assign-role', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+      if (res.ok) {
+        setMessage('Role assigned successfully');
+        setMessageType('success');
+        setEmail(''); setFirstName(''); setLastName(''); setDepartment('');
+        // Refresh list to ensure the new/updated user appears
+        loadUsers();
+      }
       else { setMessage('Failed to assign role'); setMessageType('error'); }
     } catch (_) { setMessage('Failed to assign role'); setMessageType('error'); }
     finally { setBusy(false); }
+  }
+
+  async function loadDepartments() {
+    try {
+      const { apiFetch } = await import('../utils/api');
+      const res = await apiFetch('/api/departments');
+      const data = await res.json();
+      setDepartments(data.departments || []);
+    } catch (_) { setDepartments([]); }
+  }
+
+  async function loadSettings() {
+    try {
+      const { apiFetch } = await import('../utils/api');
+      const res = await apiFetch('/api/admin/settings');
+      const data = await res.json();
+      setDemoMode(!!data.demo_mode);
+    } catch (_) { setDemoMode(null); }
+  }
+
+  async function toggleDemoMode() {
+    try {
+      setSettingsBusy(true);
+      const { apiFetch } = await import('../utils/api');
+      const res = await apiFetch('/api/admin/settings', {
+        method: 'PUT', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ demo_mode: !demoMode })
+      });
+      if (res.ok) {
+        setDemoMode(!demoMode);
+        setMessage(`Switched to ${!demoMode ? 'Demo' : 'Live'} mode`);
+        setMessageType('success');
+        // Refresh data to reflect mode change
+        loadUsers();
+        loadRoles();
+      } else {
+        const t = await res.json().catch(()=>({}));
+        setMessage(`Failed to update mode: ${t?.error || ''}`);
+        setMessageType('error');
+      }
+    } catch (_) {
+      setMessage('Failed to update mode'); setMessageType('error');
+    } finally { setSettingsBusy(false); }
   }
 
   async function loadUsers() {
@@ -188,6 +251,26 @@ const Admin = () => {
       )}
 
       <Grid container spacing={3}>
+        {/* Environment Settings */}
+        <Grid item xs={12}>
+          <Card sx={{ borderRadius: 2, boxShadow: 2 }}>
+            <CardContent sx={{ p: { xs: 2, sm: 3 }, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <Box>
+                <Typography variant="h6" sx={{ mb: 0.5 }}>Environment</Typography>
+                <Typography variant="body2" color="text.secondary">
+                  Mode: {demoMode === null ? '…' : (demoMode ? 'Demo (no external services)' : 'Live (DB/Redis integrations)')}
+                </Typography>
+              </Box>
+              <StandardButton
+                variant={demoMode ? 'outlined' : 'contained'}
+                onClick={toggleDemoMode}
+                loading={settingsBusy}
+              >
+                Switch to {demoMode ? 'Live' : 'Demo'}
+              </StandardButton>
+            </CardContent>
+          </Card>
+        </Grid>
         {/* User Search & Roles */}
         <Grid item xs={12}>
           <Card sx={{ borderRadius: 2, boxShadow: 2 }}>
@@ -292,7 +375,7 @@ const Admin = () => {
             <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
               <Typography variant="h6" sx={{ mb: 3 }}>User Role Management</Typography>
               <Grid container spacing={2} alignItems="center">
-                <Grid item xs={12} sm={6} md={5}>
+                <Grid item xs={12} sm={6} md={3}>
                   <TextField
                     label="User Email"
                     value={email}
@@ -301,7 +384,23 @@ const Admin = () => {
                     placeholder="user@example.com"
                   />
                 </Grid>
-                <Grid item xs={12} sm={6} md={4}>
+                <Grid item xs={12} sm={6} md={2}>
+                  <TextField
+                    label="First Name (optional)"
+                    value={firstName}
+                    onChange={e=>setFirstName(e.target.value)}
+                    fullWidth
+                  />
+                </Grid>
+                <Grid item xs={12} sm={6} md={2}>
+                  <TextField
+                    label="Last Name (optional)"
+                    value={lastName}
+                    onChange={e=>setLastName(e.target.value)}
+                    fullWidth
+                  />
+                </Grid>
+                <Grid item xs={12} sm={6} md={3}>
                   <FormControl fullWidth>
                     <InputLabel id="role-select-label">Role</InputLabel>
                     <Select
@@ -323,7 +422,23 @@ const Admin = () => {
                     </Select>
                   </FormControl>
                 </Grid>
-                <Grid item xs={12} md={3}>
+                <Grid item xs={12} sm={6} md={2}>
+                  <FormControl fullWidth>
+                    <InputLabel id="dept-select-label">Department (optional)</InputLabel>
+                    <Select
+                      labelId="dept-select-label"
+                      label="Department (optional)"
+                      value={department}
+                      onChange={e=>setDepartment(e.target.value)}
+                    >
+                      <MenuItem value="">None</MenuItem>
+                      {departments.map(d => (
+                        <MenuItem key={d.id || d.code} value={d.id || d.code}>{d.name} ({d.code})</MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                </Grid>
+                <Grid item xs={12} md={2}>
                   <StandardButton
                     variant="contained"
                     onClick={assignRole}

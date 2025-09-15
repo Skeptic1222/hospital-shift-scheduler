@@ -96,6 +96,12 @@ const Settings = () => {
       setError(null);
       const { apiFetch } = await import('../utils/api');
       const res = await apiFetch('/api/settings');
+      const ct = (res.headers && res.headers.get && res.headers.get('content-type')) || '';
+      if (!ct.includes('application/json')) {
+        // Attempt to read text for diagnostics
+        try { console.warn('Unexpected content-type for /api/settings:', ct, await res.text()); } catch (_) {}
+        throw new Error('Invalid settings response');
+      }
       const data = await res.json();
 
       // Merge with defaults
@@ -105,7 +111,7 @@ const Settings = () => {
       }));
     } catch (err) {
       setError('Failed to load settings');
-      console.error(err);
+      try { console.error('Settings load error:', err?.message || err); } catch (_) {}
     } finally {
       setLoading(false);
     }
@@ -116,11 +122,15 @@ const Settings = () => {
       setSaving(true);
       setError(null);
       const { apiFetch } = await import('../utils/api');
-      await apiFetch('/api/settings', {
+      const res = await apiFetch('/api/settings', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(settings)
       });
+      if (!res.ok) {
+        const t = await res.text().catch(()=> '');
+        throw new Error(`Save failed (${res.status}) ${t}`);
+      }
       // Persist transport preference locally
       try { localStorage.setItem('socket_transport', wsPref); } catch(_){ /* ignore */ }
       try { localStorage.setItem('admin_emails', adminEmails); } catch(_){ /* ignore */ }

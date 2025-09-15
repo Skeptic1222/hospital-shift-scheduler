@@ -50,6 +50,7 @@ IF OBJECT_ID('scheduler.roles', 'U') IS NOT NULL DROP TABLE scheduler.roles;
 IF OBJECT_ID('scheduler.departments', 'U') IS NOT NULL DROP TABLE scheduler.departments;
 IF OBJECT_ID('scheduler.hospitals', 'U') IS NOT NULL DROP TABLE scheduler.hospitals;
 IF OBJECT_ID('audit.audit_log', 'U') IS NOT NULL DROP TABLE audit.audit_log;
+IF OBJECT_ID('scheduler.push_subscriptions', 'U') IS NOT NULL DROP TABLE scheduler.push_subscriptions;
 
 -- Hospitals/Facilities
 CREATE TABLE scheduler.hospitals (
@@ -249,6 +250,21 @@ CREATE TABLE scheduler.notifications (
 CREATE INDEX IX_Notifications_User ON scheduler.notifications(user_id);
 CREATE INDEX IX_Notifications_Status ON scheduler.notifications(status);
 CREATE INDEX IX_Notifications_Scheduled ON scheduler.notifications(scheduled_for);
+
+-- Web Push subscriptions
+CREATE TABLE scheduler.push_subscriptions (
+    id UNIQUEIDENTIFIER PRIMARY KEY DEFAULT NEWID(),
+    user_id UNIQUEIDENTIFIER REFERENCES scheduler.users(id) ON DELETE CASCADE,
+    endpoint NVARCHAR(2000) NOT NULL,
+    p256dh NVARCHAR(512) NOT NULL,
+    auth NVARCHAR(256) NOT NULL,
+    user_agent NVARCHAR(1024),
+    created_at DATETIME2 DEFAULT GETUTCDATE(),
+    updated_at DATETIME2 DEFAULT GETUTCDATE(),
+    is_active BIT DEFAULT 1,
+    CONSTRAINT UQ_Push_Subscription UNIQUE(user_id, endpoint)
+);
+CREATE INDEX IX_PushSubs_User ON scheduler.push_subscriptions(user_id);
 
 -- =====================================================
 -- FATIGUE MANAGEMENT

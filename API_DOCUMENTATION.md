@@ -1,13 +1,15 @@
 # Hospital Shift Scheduler API Documentation
 
+Status: This API supports both live and demo/offline modes. When `SKIP_EXTERNALS=true`, database, Redis, and third‑party integrations are skipped and many endpoints return realistic demo data. Authentication in the current build verifies Google ID tokens (server‑side tokeninfo). Auth0 scaffolding exists but is not wired into `server.js` yet.
+
 ## Base URL
 ```
-Production: https://api.hospital-scheduler.com
-Development: http://localhost:3001
+Production (behind IIS): https://<host>/scheduler/api
+Development (Node directly): http://localhost:3001/api
 ```
 
 ## Authentication
-All API requests require authentication via JWT Bearer token from Auth0.
+All API requests require authentication via a JWT Bearer token. In the current server build, Google ID tokens are verified against `https://oauth2.googleapis.com/tokeninfo` with `GOOGLE_CLIENT_ID`/`REACT_APP_GOOGLE_CLIENT_ID` as the expected audience. In demo/dev, local tokens may be accepted for admin/supervisor role elevation based on `ADMIN_EMAILS`/`SUPERVISOR_EMAILS`.
 
 ### Headers
 ```http
@@ -25,7 +27,8 @@ X-Hospital-ID: <hospital-uuid>
 
 ### Authentication
 
-#### POST /api/auth/login
+#### POST /api/auth/login (not implemented)
+Returns 501 in current build. Use Google Sign‑In on the client to obtain an ID token and send as `Authorization: Bearer <id_token>`.
 ```javascript
 // Request
 {
@@ -273,7 +276,8 @@ Mark notification as read.
 }
 ```
 
-#### POST /api/notifications/subscribe
+#### POST /api/notifications/subscribe (planned)
+Subscription storage endpoint is not present yet; push is mocked in demo mode.
 Subscribe to push notifications.
 
 ```javascript
@@ -295,7 +299,7 @@ Subscribe to push notifications.
 }
 ```
 
-### Schedule Management
+### Schedule Management (planned)
 
 #### GET /api/schedule
 Get schedule view.
@@ -461,8 +465,10 @@ Generate reports.
 
 Connect to WebSocket for real-time updates:
 ```javascript
-const socket = io('wss://api.hospital-scheduler.com', {
-  auth: { token: 'Bearer <token>' }
+const socket = io('https://<host>/scheduler', {
+  path: '/scheduler/socket.io',
+  auth: { token: 'Bearer <token>' },
+  transports: ['polling'] // required behind IIS
 });
 
 // Listen for events
@@ -551,13 +557,9 @@ GET /api/integrations/export
 &format=json|csv
 ```
 
-## HIPAA Compliance Notes
+## HIPAA Notes
 
-1. All endpoints log access to audit trail
-2. PHI is never included in URLs
-3. All responses are encrypted with TLS 1.3
-4. Session timeout after 15 minutes of inactivity
-5. MFA required for all user accounts
+This project includes HIPAA‑minded patterns (audit logging hooks, cache encryption, rate limits, TLS at IIS, session controls). A formal HIPAA compliance program and BAA are required for production deployments; Auth0 MFA integration is scaffolded but not enabled in the current server.
 6. Rate limiting prevents brute force attacks
 7. All timestamps in UTC ISO 8601 format
 

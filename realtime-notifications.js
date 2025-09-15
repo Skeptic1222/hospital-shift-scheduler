@@ -429,10 +429,8 @@ class RealtimeNotificationSystem {
             if (!this.pushEnabled) {
                 return { channel: 'push', status: 'disabled' };
             }
-            // Get user's push subscription
-            const subscription = await this.getUserPushSubscription(notification.userId);
-            
-            if (!subscription) {
+            const subscriptions = await this.getUserPushSubscriptions(notification.userId);
+            if (!subscriptions || subscriptions.length === 0) {
                 return { channel: 'push', status: 'no_subscription' };
             }
 
@@ -449,9 +447,23 @@ class RealtimeNotificationSystem {
                 vibrate: notification.priority >= 4 ? [200, 100, 200] : undefined
             });
 
-            await webpush.sendNotification(subscription, payload);
-            
-            return { channel: 'push', status: 'sent' };
+            let successes = 0;
+            for (const sub of subscriptions) {
+                try {
+                    await webpush.sendNotification({
+                        endpoint: sub.endpoint,
+                        keys: { p256dh: sub.p256dh, auth: sub.auth }
+                    }, payload);
+                    successes++;
+                } catch (e) {
+                    // If gone, mark inactive
+                    if (String(e?.statusCode) === '410') {
+                        try { await this.repositories.pushSubscriptions.update(sub.id, { is_active: 0 }); } catch (_) {}
+                    }
+                }
+            }
+
+            return { channel: 'push', status: successes > 0 ? 'sent' : 'failed' };
         } catch (error) {
             console.error('Push notification error:', error);
             return { channel: 'push', status: 'failed', error: error.message };
@@ -690,9 +702,15 @@ class RealtimeNotificationSystem {
         await this.repositories.notifications.update(id, { status: 'failed' });
     }
 
-    async getUserPushSubscription(userId) {
-        // Not implemented; return null to skip push
-        return null;
+    async getUserPushSubscriptions(userId) {
+        try {
+            if (!this.db.connected) return [];
+            const rs = await this.db.query(
+                `SELECT TOP 5 * FROM scheduler.push_subscriptions WHERE user_id=@uid AND is_active=1 ORDER BY updated_at DESC`,
+                { uid: userId }
+            );
+            return rs.recordset || [];
+        } catch (_) { return []; }
     }
 
     async getUserInfo(userId) {

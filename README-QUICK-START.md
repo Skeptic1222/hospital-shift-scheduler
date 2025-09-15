@@ -4,15 +4,14 @@
 
 The backend demo server is successfully running on **http://localhost:3001**
 
-## ✅ What's Working
+## ✅ What’s Working
 
-### Backend Server (Running on port 3001)
-- ✅ Demo API server is active
-- ✅ All endpoints configured
-- ✅ Demo data loaded (832 shifts, 8 staff members)
-- ✅ No external dependencies required
+### Backend (port 3001)
+- ✅ Demo/offline mode works (no external dependencies required)
+- ✅ Core endpoints available; some routes return demo data when `SKIP_EXTERNALS=true`
+- ✅ Demo data loader available (hundreds of shifts + sample staff)
 
-### API Endpoints Available
+### API Endpoints (high level)
 - `GET /api/health` - Server health check
 - `GET /api/dashboard/metrics` - Dashboard data
 - `GET /api/shifts` - All shifts
@@ -21,6 +20,8 @@ The backend demo server is successfully running on **http://localhost:3001**
 - `GET /api/users/profile` - User profile
 - `POST /api/shifts` - Create new shift
 - `POST /api/shifts/assign` - Assign staff to shift
+ - `POST /api/queue/open-shift` - FCFS open shift
+ - `POST /api/queue/respond` - FCFS respond
 
 ## 📱 How to Access the Application
 
@@ -69,8 +70,8 @@ curl http://localhost:3001/api/dashboard/metrics
 ### Backend Features ✅
 - **Demo Mode**: Runs without external dependencies
 - **Rich Test Data**: Comprehensive shifts and staff data
-- **All Endpoints**: Complete API implementation
-- **Real-time Ready**: Socket.io configuration included
+- **Real-time Ready**: Socket.io configuration included (polling transport in prod/IIS)
+- **Security Defaults**: Helmet, CORS, rate limits, structured logging
 
 ### Pages Updated ✅
 - **Dashboard**: Full metrics and real-time updates
@@ -124,12 +125,12 @@ scheduler/
 
 ## 🎉 Success!
 
-The application is fully functional with:
+The application is functional in demo mode with:
 - ✅ Consistent, professional UI
 - ✅ Mobile-first responsive design
-- ✅ All buttons properly sized (no cut-offs)
+- ✅ Buttons/touch targets standardized
 - ✅ Backend server running with demo data
-- ✅ Frontend connected to all endpoints
+- ✅ Frontend connected to available endpoints
 - ✅ Rich test data for demonstration
 
 **Next Step**: Open http://localhost:3000 (after running `npm start`) or http://localhost:3001 (if built) to see the application!

@@ -1,35 +1,34 @@
 # Hospital Shift Scheduler
 
-A HIPAA-compliant hospital shift scheduling system with First-Come, First-Served (FCFS) distribution, real-time notifications, and comprehensive staff management.
+Hospital shift scheduling system with First-Come, First-Served (FCFS) distribution, real-time notifications, and staff management. The app runs cleanly in an offline/demo mode (no external services) and can be hosted behind IIS at `/scheduler`.
 
 ## Features
 
-- **FCFS Shift Distribution**: Fair shift allocation with 15-minute response windows
-- **Real-time Updates**: WebSocket-based notifications for instant updates
-- **Multi-channel Notifications**: Email, SMS, push, and in-app alerts
-- **HIPAA Compliance**: Comprehensive security with audit logging
-- **Role-based Access**: Admin, supervisor, and staff roles
-- **Mobile-Responsive**: Optimized for healthcare workers on the go
-- **Fatigue Management**: Track consecutive hours and suggest rest periods
-- **Skill-based Matching**: Assign shifts based on certifications and skills
+- FCFS shift distribution with 15-minute response windows
+- Real-time updates (Socket.io via long-polling for IIS compatibility)
+- Multi-channel notifications (email/SMS/push/in-app; mockable in demo mode)
+- Security-first defaults: Helmet, CORS, rate limits, request logging, audit trail hooks
+- Role-aware UI (admin/supervisor/staff) via env-configurable emails in demo/dev
+- Mobile-responsive UI (Material UI)
+- Fatigue and workload awareness (early version)
 
 ## Tech Stack
 
-- **Frontend**: React, Material-UI, Redux
-- **Backend**: Node.js, Express, Socket.io
-- **Database**: SQL Server Express
-- **Cache**: Redis
-- **Authentication**: Auth0 with MFA
-- **Deployment**: IIS on Windows Server
+- Frontend: React 18, Material UI 5, Redux Toolkit
+- Backend: Node.js (Express), Socket.io (polling transport in prod/IIS)
+- Database: SQL Server (schema + procs provided; demo mode skips DB)
+- Cache: Redis (skipped in demo mode)
+- Authentication: Google ID token verification (server-side tokeninfo); Auth0 scaffolding present but not wired
+- Deployment: IIS on Windows Server (reverse proxy to Node API at port 3001)
 
 ## Installation
 
 ### Prerequisites
 
 - Node.js 18+
-- SQL Server Express
-- Redis
-- IIS with iisnode module (for production)
+- SQL Server Express (optional in demo mode)
+- Redis (optional in demo mode)
+- IIS with URL Rewrite/ARR (for production behind `/scheduler`)
 
 ### Setup
 
@@ -50,31 +49,32 @@ cp .env.example .env
 # Edit .env with your configuration
 ```
 
-4. Set up the database:
+4. Set up the database (skip in demo mode):
 ```bash
 npm run db:migrate
 npm run db:seed
 ```
 
-5. Start API behind IIS (no port in browser URL):
-- Windows (demo/offline):
-  - Open PowerShell as Administrator in `C:\inetpub\wwwroot\scheduler`
-  - `$env:SKIP_EXTERNALS='true'`
-  - `node server.js`
-- WSL (SQL auth):
+5. Start the API
+- Demo/offline mode (no external dependencies):
+  - Windows PowerShell (in `C:\inetpub\wwwroot\scheduler`):
+    - `$env:SKIP_EXTERNALS='true'`
+    - `node server.js`
+  - Or run the standalone demo server: `node server-demo.js`
+- WSL dev (proxying to Windows IIS):
   - `DEMO_MODE=true SKIP_EXTERNALS=true ./scripts/start-api-wsl.sh`
 
-Then browse to `http://localhost/scheduler`.
+Then browse to `http://localhost/scheduler` when behind IIS, or `http://localhost:3001` when serving the built UI from the Node server.
 
 ## Development
 
 ### Available Scripts
 
-- `npm start` - Start production server
-- `npm run dev` - Start development server with hot reload
-- `npm test` - Run tests
-- `npm run build` - Build for production
-- `npm run lint` - Run ESLint
+- `npm start` — Start API in production mode (serves `build/` if present)
+- `npm run dev` — Start API with hot reload
+- `npm test` — Run Jest with coverage (see jest.setup for defaults)
+- `npm run build` — Build React UI to `build/`
+- `npm run lint` — Lint with ESLint
 
 ### Demo Mode
 
@@ -82,7 +82,7 @@ Run with demo data (no external services required):
 ```bash
 export DEMO_MODE=true
 export SKIP_EXTERNALS=true
-npm run demo
+node server.js    # or: node server-demo.js
 ```
 
 ### Test Accounts
@@ -102,30 +102,24 @@ Deploy using PowerShell (requires Administrator):
 .\deploy.ps1 -Environment production -SqlServer ".\SQLEXPRESS" -IISAppName "HospitalScheduler" -Port 3001
 ```
 
-### Docker Deployment
-
-```bash
-docker-compose up -d
-```
+Docker Compose is not currently included; use IIS + Node per the included scripts and `web.config`.
 
 ## Configuration
 
 ### Environment Variables
 
-Key environment variables:
+Key variables (see `.env.example` for the full list):
 
-- `AUTH0_DOMAIN` - Auth0 domain
-- `DB_SERVER` - SQL Server instance
-- `REDIS_HOST` - Redis server
-- `JWT_SECRET` - JWT signing secret
-- `ALLOWED_ORIGINS` - CORS origins
-- `REACT_APP_PUBLIC_BASE` - Public base URL for client (e.g., `http://localhost/scheduler`)
+- `GOOGLE_CLIENT_ID` / `REACT_APP_GOOGLE_CLIENT_ID` — Google ID token audience (used in dev/prod respectively)
+- `DB_SERVER`, `DB_NAME`, `DB_USER`, `DB_PASSWORD` — SQL Server (skip in demo mode)
+- `REDIS_HOST`, `REDIS_PORT` — Redis (skip in demo mode)
+- `ALLOWED_ORIGINS` — Allowed CORS origins
+- `REACT_APP_PUBLIC_BASE` — Public base URL for client (e.g., `http://localhost/scheduler`)
+- `ADMIN_EMAILS`, `SUPERVISOR_EMAILS`, `REACT_APP_ADMIN_EMAILS`, `REACT_APP_SUPERVISOR_EMAILS` — role elevation in demo/dev
 
-See `.env.example` for full list.
+### FCFS Algorithm (overview)
 
-### FCFS Algorithm Configuration
-
-The shift distribution uses weighted priorities:
+The FCFS queue uses time windows and eligibility weighting:
 - Seniority: 30%
 - Last Shift Worked: 20%
 - Skill Match: 25%
@@ -133,14 +127,13 @@ The shift distribution uses weighted priorities:
 
 ## API Documentation
 
-API documentation available at `/api/docs` when running in development mode.
+See `API_DOCUMENTATION.md`. Many endpoints provide demo responses when `SKIP_EXTERNALS=true`.
 
 ## Reverse Proxy (IIS/ARR)
-- The app is hosted under `/scheduler`. CRA `homepage` is set to `/scheduler` so asset paths resolve.
-- IIS `web.config` routes:
-  - `/scheduler/api/*` and `/scheduler/socket.io/*` → `http://localhost:3001`
-  - PWA icons (`/scheduler/android-chrome-*.png`, `/scheduler/apple-touch-icon.png`) → `/api/assets/icon` (placeholder images) unless real icons are provided.
-- Keep browser URLs portless; IIS proxies to the Node API on port 3001.
+- The UI is hosted under `/scheduler`. CRA `homepage` is set accordingly so asset paths resolve.
+- IIS `web.config` proxies `/scheduler/api/*` and `/scheduler/socket.io/*` → `http://localhost:3001`.
+- PWA icon requests can be served from `/api/assets/icon` when placeholders are needed.
+- Browser URLs stay portless; IIS proxies to port 3001.
 
 ## PWA Icons
 - Add branded icons to `public/`:
@@ -150,12 +143,11 @@ API documentation available at `/api/docs` when running in development mode.
 
 ## Security
 
-- AES-256 encryption for data at rest
-- TLS 1.2+ for data in transit
-- Automatic session timeout (15 minutes)
-- Comprehensive audit logging
-- Role-based access control
-- Multi-factor authentication
+- Helmet, CORS, rate limiting, request IDs + structured logging
+- Redis cache encryption for sensitive values (AES-256-GCM)
+- Audit logging endpoints/hooks
+- TLS is terminated at IIS/ARR (configure 1.2+ in IIS)
+- AuthN: Google ID tokens (tokeninfo) in current build; Auth0 scaffolding included for future MFA/BAA requirements
 
 ## Contributing
 
@@ -167,14 +159,13 @@ API documentation available at `/api/docs` when running in development mode.
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+No license file is included. Treat as private/internal unless a license is added.
 
 ## Support
 
-For issues and questions, please use the [GitHub Issues](https://github.com/Skeptic1222/hospital-shift-scheduler/issues) page.
+File issues in your internal tracker or raise them with the project maintainers.
 
 ## Acknowledgments
 
-- Built with React and Material-UI
-- Real-time features powered by Socket.io
-- HIPAA compliance consulting by healthcare IT experts
+- React + Material UI
+- Real-time updates via Socket.io
