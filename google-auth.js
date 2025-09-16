@@ -28,7 +28,6 @@ async function verifyGoogleIdToken(idToken, expectedAud) {
 
 function authenticate() {
   const clientId = process.env.REACT_APP_GOOGLE_CLIENT_ID || process.env.GOOGLE_CLIENT_ID;
-  const skipExternals = process.env.SKIP_EXTERNALS === 'true';
   return async (req, res, next) => {
     try {
       const auth = req.headers.authorization || '';
@@ -36,22 +35,6 @@ function authenticate() {
         return res.status(401).json({ error: 'Unauthorized' });
       }
       const token = auth.slice(7);
-      if (skipExternals) {
-        // Minimal decode for local/dev: accept any token and attach basic user
-        try {
-          const payload = JSON.parse(Buffer.from(token.split('.')[1] || '', 'base64').toString('utf8'));
-          req.user = {
-            sub: payload.sub || 'local-user',
-            email: payload.email || 'user@example.com',
-            name: payload.name || 'Local User',
-            picture: payload.picture,
-            roles: payload.roles || []
-          };
-        } catch (_) {
-          req.user = { sub: 'local-user', email: 'user@example.com', name: 'Local User', roles: [] };
-        }
-        return next();
-      }
       const info = await verifyGoogleIdToken(token, clientId);
       req.user = {
         sub: info.sub,
@@ -63,84 +46,107 @@ function authenticate() {
       };
       return next();
     } catch (err) {
-      // Soft fallback: accept locally-decoded JWTs for admins/supervisors (demo/dev scenarios)
-      try {
-        const auth = req.headers.authorization || '';
-        const raw = auth.startsWith('Bearer ') ? auth.slice(7) : '';
-        const payload = raw ? JSON.parse(Buffer.from(raw.split('.')[1] || '', 'base64').toString('utf8')) : null;
-        if (payload && payload.email) {
-          const envAdmins = (process.env.ADMIN_EMAILS || process.env.REACT_APP_ADMIN_EMAILS || '')
-            .split(',').map(s => s.trim()).filter(Boolean);
-          const envSups = (process.env.SUPERVISOR_EMAILS || '')
-            .split(',').map(s => s.trim()).filter(Boolean);
-          const admins = Array.from(new Set(envAdmins || []));
-          const sups = Array.from(new Set(envSups || []));
-          const roles = [];
-          if (admins.includes(payload.email)) roles.push('admin');
-          if (sups.includes(payload.email)) roles.push('supervisor');
-          if (roles.length > 0) {
-            req.user = {
-              sub: payload.sub || payload.userId || payload.email,
-              email: payload.email,
-              name: payload.name || payload.email,
-              picture: payload.picture,
-              roles
-            };
-            return next();
-          }
-        }
-      } catch (_) {}
-      return res.status(401).json({ error: 'Unauthorized', detail: err.message });
+      // SECURITY: no soft fallback; require valid Google ID token
+      console.error('Authentication error:', err);
+      return res.status(401).json({ error: 'Unauthorized' });
     }
   };
 }
 
 function authorize(requiredRoles = []) {
-  return (req, res, next) => {
+  return async (req, res, next) => {
     if (!requiredRoles || requiredRoles.length === 0) return next();
-    const adminEnv = (process.env.ADMIN_EMAILS || process.env.REACT_APP_ADMIN_EMAILS || '').trim();
-    const supervisorEnv = (process.env.SUPERVISOR_EMAILS || '').trim();
-    let adminEmails = adminEnv.length ? adminEnv.split(',').map(s => s.trim()).filter(Boolean) : [];
-    adminEmails = Array.from(new Set(adminEmails));
-    const supervisorEmails = supervisorEnv.length ? supervisorEnv.split(',').map(s => s.trim()).filter(Boolean) : [];
-    const userRoles = new Set(req.user?.roles || []);
-    if (req.user?.email) {
-      if (adminEmails.includes(req.user.email)) userRoles.add('admin');
-      if (supervisorEmails.includes(req.user.email)) userRoles.add('supervisor');
+    
+    try {
+      // SECURITY: Check roles from database
+      const userEmail = req.user?.email;
+      
+      if (!userEmail) {
+        return res.status(403).json({ error: 'Forbidden: No user email' });
+      }
+      
+      let userRoles = new Set(req.user?.roles || []);
+      
+      // Get roles from database
+      try {
+          const { db } = require('./db-config');
+          if (db.connected) {
+            const result = await db.query(`
+              SELECT r.name as role_name
+              FROM scheduler.users u
+              LEFT JOIN scheduler.roles r ON u.role_id = r.id
+              WHERE u.email = @email AND u.is_active = 1
+            `, { email: userEmail });
+            
+            if (result.recordset && result.recordset.length > 0) {
+              const dbRole = result.recordset[0].role_name;
+              if (dbRole) userRoles.add(dbRole);
+            }
+          }
+      } catch (dbError) {
+        try {
+          const { logger } = require('./logger-config');
+          logger.error('Authz role lookup failed', { error: dbError?.message });
+        } catch (_) {
+          console.error('Error fetching user roles from database:', dbError);
+        }
+      }
+      
+      // Fallback: treat configured admin emails as admins (no demo mode)
+      try {
+        const adminsEnv = (process.env.ADMIN_EMAILS || 'sop1973@gmail.com')
+          .split(',')
+          .map(s => s.trim().toLowerCase())
+          .filter(Boolean);
+        if (adminsEnv.includes(userEmail.toLowerCase())) {
+          userRoles.add('admin');
+        }
+      } catch (_) {}
+
+      // Admin role has access to everything
+      if (userRoles.has('admin')) return next();
+      
+      // Check if user has any required role
+      const allowed = requiredRoles.some(r => userRoles.has(r));
+      if (!allowed) {
+        try {
+          const { logger } = require('./logger-config');
+          logger.warn('Authz denied', { email: userEmail, required: requiredRoles, roles: Array.from(userRoles) });
+        } catch (_) {}
+        return res.status(403).json({ 
+          error: 'Forbidden',
+          message: `Required roles: ${requiredRoles.join(', ')}. Your roles: ${Array.from(userRoles).join(', ')}`
+        });
+      }
+      
+      // Store roles in request for later use
+      req.user.roles = Array.from(userRoles);
+      next();
+    } catch (error) {
+      try {
+        const { logger } = require('./logger-config');
+        logger.error('Authorization error', { error: error?.message });
+      } catch (_) { console.error('Authorization error:', error); }
+      return res.status(500).json({ error: 'Authorization check failed' });
     }
-    if (userRoles.has('admin')) return next();
-    const allowed = requiredRoles.some(r => userRoles.has(r));
-    if (!allowed) return res.status(403).json({ error: 'Forbidden' });
-    next();
   };
-}module.exports = {
+}
+
+module.exports = {
   authenticate,
   authorize,
   verifyGoogleIdToken,
   softAuthenticate,
+  handleGoogleAuth
 };
 
 function softAuthenticate() {
   const clientId = process.env.REACT_APP_GOOGLE_CLIENT_ID || process.env.GOOGLE_CLIENT_ID;
-  const skipExternals = process.env.SKIP_EXTERNALS === 'true';
   return async (req, _res, next) => {
     try {
       const auth = req.headers.authorization || '';
       if (!auth.startsWith('Bearer ')) return next();
       const token = auth.slice(7);
-      if (skipExternals) {
-        try {
-          const payload = JSON.parse(Buffer.from(token.split('.')[1] || '', 'base64').toString('utf8'));
-          req.user = {
-            sub: payload.sub || 'local-user',
-            email: payload.email || 'user@example.com',
-            name: payload.name || 'Local User',
-            picture: payload.picture,
-            roles: payload.roles || []
-          };
-        } catch (_) {}
-        return next();
-      }
       const info = await verifyGoogleIdToken(token, clientId).catch(() => null);
       if (info) {
         req.user = {
@@ -159,7 +165,64 @@ function softAuthenticate() {
   };
 }
 
+// Handle Google authentication login
+async function handleGoogleAuth(req, res) {
+  try {
+    const { credential, password } = req.body;
+    const jwt = require('jsonwebtoken');
+    
+    // SECURITY FIX: Remove demo password bypass
+    // Never accept passwords in Google OAuth flow
+    if (password) {
+      return res.status(400).json({ 
+        error: 'Invalid authentication method',
+        message: 'Google authentication does not use passwords' 
+      });
+    }
+    
+    if (!credential) {
+      return res.status(400).json({ error: 'Missing credential' });
+    }
 
-
-
-
+    // Production: Verify with Google
+    const clientId = process.env.REACT_APP_GOOGLE_CLIENT_ID || process.env.GOOGLE_CLIENT_ID;
+    if (!clientId) {
+      return res.status(500).json({ error: 'Google client ID not configured' });
+    }
+    
+    const info = await verifyGoogleIdToken(credential, clientId);
+    
+    // Generate session token
+    const secret = process.env.JWT_SECRET;
+    if (!secret || secret.length < 32) {
+      console.error('JWT_SECRET not configured or too weak');
+      return res.status(500).json({ error: 'Server configuration error' });
+    }
+    
+    const token = jwt.sign(
+      { 
+        sub: info.sub,
+        email: info.email,
+        name: info.name,
+        picture: info.picture,
+        email_verified: info.email_verified
+      },
+      secret,
+      { expiresIn: '24h' }
+    );
+    
+    res.json({ 
+      access_token: token,
+      user: {
+        email: info.email,
+        name: info.name,
+        picture: info.picture,
+        email_verified: info.email_verified
+      }
+    });
+  } catch (error) {
+    console.error('Google auth error:', error);
+    // SECURITY FIX: Don't expose internal error details
+    res.status(401).json({ error: 'Authentication failed' });
+  }
+}

@@ -72,73 +72,7 @@ const Notifications = () => {
       const res = await apiFetch('/api/notifications');
       const data = await res.json();
 
-      // Add demo notifications if empty
-      const demoNotifications = data.notifications?.length > 0 ? data.notifications : [
-        {
-          id: 1,
-          type: 'shift',
-          title: 'New Shift Available',
-          message: 'Emergency Department needs coverage for tomorrow 7AM-3PM',
-          timestamp: new Date(Date.now() - 1000 * 60 * 5),
-          read: false,
-          priority: 'high',
-          actionable: true,
-          action: 'viewShift',
-          metadata: { shiftId: 'shift-123', department: 'ED' }
-        },
-        {
-          id: 2,
-          type: 'swap',
-          title: 'Shift Swap Request',
-          message: 'Sarah Johnson wants to swap shifts with you on Friday',
-          timestamp: new Date(Date.now() - 1000 * 60 * 30),
-          read: false,
-          priority: 'medium',
-          actionable: true,
-          action: 'viewSwap',
-          metadata: { swapId: 'swap-456', requester: 'Sarah Johnson' }
-        },
-        {
-          id: 3,
-          type: 'success',
-          title: 'Shift Confirmed',
-          message: 'You have been assigned to ICU on Wednesday 3PM-11PM',
-          timestamp: new Date(Date.now() - 1000 * 60 * 60),
-          read: true,
-          priority: 'normal'
-        },
-        {
-          id: 4,
-          type: 'alert',
-          title: 'Fatigue Warning',
-          message: 'You have worked 48 hours this week. Consider taking a break.',
-          timestamp: new Date(Date.now() - 1000 * 60 * 120),
-          read: false,
-          priority: 'high'
-        },
-        {
-          id: 5,
-          type: 'info',
-          title: 'Schedule Published',
-          message: 'Next week\'s schedule is now available',
-          timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24),
-          read: true,
-          priority: 'normal'
-        },
-        {
-          id: 6,
-          type: 'urgent',
-          title: 'Emergency Coverage Needed',
-          message: 'Critical staffing shortage in OR - immediate coverage required',
-          timestamp: new Date(Date.now() - 1000 * 60 * 2),
-          read: false,
-          priority: 'urgent',
-          actionable: true,
-          action: 'respondUrgent'
-        }
-      ];
-
-      setNotifications(demoNotifications);
+      setNotifications(Array.isArray(data.notifications) ? data.notifications : []);
     } catch (err) {
       setError('Failed to load notifications');
       console.error(err);

@@ -1,8 +1,9 @@
 module.exports = {
-  testEnvironment: 'node',
+  testEnvironment: 'jsdom',
   setupFiles: ['<rootDir>/jest.setup.js'],
   setupFilesAfterEnv: ['@testing-library/jest-dom'],
   testMatch: ['**/?(*.)+(test).[jt]s?(x)'],
+  testPathIgnorePatterns: ['/node_modules/', '/tests/e2e/'],
   moduleFileExtensions: ['js', 'jsx', 'json', 'node'],
   transform: {
     '^.+\\.[jt]sx?$': 'babel-jest',

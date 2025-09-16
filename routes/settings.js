@@ -1,8 +1,7 @@
 const express = require('express');
 
-module.exports = function createSettingsRouter({ googleAuth, repositories, db, isDemo, cacheService }) {
+module.exports = function createSettingsRouter({ googleAuth, repositories, db, cacheService }) {
   const router = express.Router();
-  const store = new Map(); // demo-only in-memory store: userId -> settings
 
   const defaultSettings = {
     notifications: {
@@ -39,12 +38,7 @@ module.exports = function createSettingsRouter({ googleAuth, repositories, db, i
 
   router.get('/settings', googleAuth.authenticate(), async (req, res) => {
     try {
-      // Demo or no DB connection: use memory store
-      if ((isDemo && isDemo()) || !db.connected) {
-        const uid = req.user.sub || 'anon';
-        const settings = store.get(uid) || defaultSettings;
-        return res.json({ settings });
-      }
+      if (!db.connected) return res.status(503).json({ error: 'Database unavailable' });
 
       const email = req.user.email;
       if (!email) return res.status(400).json({ error: 'Missing user email' });
@@ -75,12 +69,7 @@ module.exports = function createSettingsRouter({ googleAuth, repositories, db, i
   router.put('/settings', googleAuth.authenticate(), async (req, res) => {
     try {
       const body = req.body || {};
-      if ((isDemo && isDemo()) || !db.connected) {
-        const uid = req.user.sub || 'anon';
-        const current = store.get(uid) || defaultSettings;
-        store.set(uid, { ...current, ...body });
-        return res.json({ ok: true, mode: 'demo' });
-      }
+      if (!db.connected) return res.status(503).json({ error: 'Database unavailable' });
 
       const email = req.user.email;
       if (!email) return res.status(400).json({ error: 'Missing user email' });
@@ -108,7 +97,7 @@ module.exports = function createSettingsRouter({ googleAuth, repositories, db, i
       prefs.settings = merged;
       await repositories.users.update(user.id, { preferences: JSON.stringify(prefs) });
       try { await cacheService.set('user_settings', { userId: user.id }, prefs.settings, { ttl: 600 }); } catch (_) {}
-      return res.json({ ok: true, mode: 'live' });
+      return res.json({ ok: true });
     } catch (e) {
       res.status(500).json({ error: 'Failed to save settings' });
     }

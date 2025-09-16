@@ -11,8 +11,12 @@ export function currentUserFromToken() {
     try { lsSups = (localStorage.getItem('supervisor_emails') || '').split(',').map(s => s.trim()).filter(Boolean); } catch (e) { void e; }
     const admins = Array.from(new Set([...envAdmins, ...lsAdmins]));
     const sups = Array.from(new Set([...envSups, ...lsSups]));
+    // Prefer roles in token payload if present (e.g., demo or pre-signed JWTs)
+    const roles = Array.isArray(p.roles) ? p.roles.map(String) : [];
     let role = 'user';
-    if (p.email && admins.includes(p.email)) role = 'admin';
+    if (roles.includes('admin')) role = 'admin';
+    else if (roles.includes('supervisor')) role = 'supervisor';
+    else if (p.email && admins.includes(p.email)) role = 'admin';
     else if (p.email && sups.includes(p.email)) role = 'supervisor';
     return { sub: p.sub, email: p.email, name: p.name, picture: p.picture, role };
   } catch (_) {

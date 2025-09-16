@@ -29,13 +29,14 @@ const QuickActions = ({ onAction }) => (
             size="medium"
             fullWidth
             sx={{ 
-              fontSize: { xs: '0.875rem', sm: '0.8rem', md: '0.875rem' },
-              padding: '8px 12px',
-              minHeight: '42px'
+              fontSize: { xs: '0.75rem', sm: '0.7rem', md: '0.8rem' },
+              padding: { xs: '6px 8px', sm: '6px 10px', md: '8px 12px' },
+              minHeight: '42px',
+              whiteSpace: 'nowrap'
             }}
             onClick={() => onAction?.('requestTimeOff')}
           >
-            Request Time Off
+            Time Off
           </StandardButton>
         </Grid>
         <Grid item xs={12} sm={6} md={6} lg={4}>

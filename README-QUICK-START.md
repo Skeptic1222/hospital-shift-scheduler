@@ -2,14 +2,12 @@
 
 ## 🚀 Server is Now Running!
 
-The backend demo server is successfully running on **http://localhost:3001**
+The backend server is accessible via IIS at **http://localhost/scheduler**
 
 ## ✅ What’s Working
 
-### Backend (port 3001)
-- ✅ Demo/offline mode works (no external dependencies required)
-- ✅ Core endpoints available; some routes return demo data when `SKIP_EXTERNALS=true`
-- ✅ Demo data loader available (hundreds of shifts + sample staff)
+### Backend
+- ✅ Core endpoints available
 
 ### API Endpoints (high level)
 - `GET /api/health` - Server health check
@@ -31,7 +29,9 @@ The backend demo server is successfully running on **http://localhost:3001**
 cd /mnt/c/inetpub/wwwroot/scheduler
 npm start
 ```
-Then open http://localhost:3000 in your browser
+# ⚠️ CRITICAL: NO PORTS IN URLS - See NO-PORT-RULE.md
+# IIS proxies /scheduler to internal service
+Then open http://localhost/scheduler in your browser
 
 ### Option 2: Build and Serve Static Files
 ```bash
@@ -39,14 +39,14 @@ Then open http://localhost:3000 in your browser
 npm run build
 
 # The backend server will serve the built files
-# Access at http://localhost:3001
+# Access at http://localhost/scheduler
 ```
 
 ### Option 3: Direct API Testing
 ```bash
 # Test the API directly
-curl http://localhost:3001/api/health
-curl http://localhost:3001/api/dashboard/metrics
+curl http://localhost/scheduler/api/health
+curl http://localhost/scheduler/api/dashboard/metrics
 ```
 
 ## 👤 Test Accounts
@@ -68,8 +68,7 @@ curl http://localhost:3001/api/dashboard/metrics
 - **No Cut-off Elements**: All content properly contained
 
 ### Backend Features ✅
-- **Demo Mode**: Runs without external dependencies
-- **Rich Test Data**: Comprehensive shifts and staff data
+- **Live Mode**: Runs with required dependencies (SQL Server, Redis)
 - **Real-time Ready**: Socket.io configuration included (polling transport in prod/IIS)
 - **Security Defaults**: Helmet, CORS, rate limits, structured logging
 
@@ -90,9 +89,9 @@ curl http://localhost:3001/api/dashboard/metrics
 4. Try the build option instead of dev server
 
 ### If the backend stops:
+Start the server again:
 ```bash
-# Restart the demo server
-node server-demo.js
+node server.js
 ```
 
 ### To see server logs:
@@ -103,14 +102,13 @@ The server is running in the background. Check the console where you started it.
 ### File Structure
 ```
 scheduler/
-├── server-demo.js        # Demo backend server (RUNNING)
+├── server.js             # Backend server
 ├── src/                  # React frontend
 │   ├── pages/           # Updated page components
 │   ├── components/      # Reusable components
 │   │   ├── common/      # StandardButton, LoadingState, etc.
 │   │   └── MobileNavigation.jsx
 │   └── hooks/           # useResponsive, etc.
-├── demo-data-enhanced.js # Test data generator
 └── .env                 # Environment configuration
 ```
 
@@ -121,16 +119,15 @@ scheduler/
 4. Connected all frontend to backend
 5. Added comprehensive error handling
 6. Implemented loading states everywhere
-7. Created demo server that works without external dependencies
 
 ## 🎉 Success!
 
-The application is functional in demo mode with:
+The application is functional with:
 - ✅ Consistent, professional UI
 - ✅ Mobile-first responsive design
 - ✅ Buttons/touch targets standardized
-- ✅ Backend server running with demo data
+- ✅ Backend server running
 - ✅ Frontend connected to available endpoints
 - ✅ Rich test data for demonstration
 
-**Next Step**: Open http://localhost:3000 (after running `npm start`) or http://localhost:3001 (if built) to see the application!
+**Next Step**: Open http://localhost/scheduler when served behind IIS (or your configured base URL).

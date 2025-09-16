@@ -21,6 +21,9 @@ class FCFSScheduler extends EventEmitter {
             skillMatch: 0.25,
             availability: 0.25
         };
+        // Store active timers for cleanup
+        this.activeTimers = new Map();
+        this.isShuttingDown = false;
     }
 
     /**
@@ -174,16 +177,32 @@ class FCFSScheduler extends EventEmitter {
     async progressToNextInQueue(openShiftId) {
         await this.db.executeProc('scheduler.ProgressFCFSQueue', { OpenShiftId: openShiftId });
         await this.notifyFirstBatch(openShiftId);
-        setTimeout(() => this.checkAndProgressWindow(openShiftId), this.WINDOW_DURATION_MINUTES * 60000);
+        // Store timer reference for cleanup
+        const timerId = setTimeout(() => {
+            this.activeTimers.delete(openShiftId);
+            if (!this.isShuttingDown) {
+                this.checkAndProgressWindow(openShiftId);
+            }
+        }, this.WINDOW_DURATION_MINUTES * 60000);
+        this.activeTimers.set(openShiftId, timerId);
     }
 
     /**
      * Schedule automatic window progression
      */
     scheduleWindowProgression(openShiftId) {
-        setTimeout(async () => {
-            await this.checkAndProgressWindow(openShiftId);
+        // Clear any existing timer for this shift
+        if (this.activeTimers.has(openShiftId)) {
+            clearTimeout(this.activeTimers.get(openShiftId));
+        }
+        // Store new timer reference
+        const timerId = setTimeout(async () => {
+            this.activeTimers.delete(openShiftId);
+            if (!this.isShuttingDown) {
+                await this.checkAndProgressWindow(openShiftId);
+            }
         }, this.WINDOW_DURATION_MINUTES * 60000);
+        this.activeTimers.set(openShiftId, timerId);
     }
 
     /**
@@ -307,6 +326,26 @@ class FCFSScheduler extends EventEmitter {
 
         await this.redis.setex(`queue:metrics:${openShiftId}`, 3600, JSON.stringify(metrics));
         return metrics;
+    }
+
+    /**
+     * Clean up all active timers and resources
+     * Call this when shutting down the application
+     */
+    async cleanup() {
+        this.isShuttingDown = true;
+        
+        // Clear all active timers
+        for (const [shiftId, timerId] of this.activeTimers) {
+            clearTimeout(timerId);
+            console.log(`Cleared timer for shift ${shiftId}`);
+        }
+        this.activeTimers.clear();
+        
+        // Remove all event listeners
+        this.removeAllListeners();
+        
+        console.log('FCFSScheduler cleanup completed');
     }
 }
 

@@ -63,7 +63,7 @@ class HIPAAAuditLogger {
         const auditEntry = {
             audit_id: this.generateAuditId(),
             timestamp: new Date().toISOString(),
-            user_id: req.user?.sub || 'anonymous',
+            user_id: req.user?.id || null,
             user_email: req.user?.email,
             user_role: req.user?.roles?.[0] || 'unknown',
             ip_address: req.ip,
@@ -144,7 +144,7 @@ class HIPAAAuditLogger {
         const auditEntry = {
             audit_id: this.generateAuditId(),
             timestamp: new Date().toISOString(),
-            user_id: req.user?.sub,
+            user_id: req.user?.id || null,
             user_email: req.user?.email,
             action: `MODIFY_${action}`,
             resource_type: resource.type,
@@ -184,7 +184,7 @@ class HIPAAAuditLogger {
             audit_id: this.generateAuditId(),
             timestamp: new Date().toISOString(),
             event_type: `SECURITY_${eventType}`,
-            user_id: req.user?.sub || 'unknown',
+            user_id: req.user?.id || null,
             ip_address: req.ip,
             user_agent: req.headers['user-agent'],
             details: this.sanitizeDetails(details),

@@ -1,15 +1,17 @@
+// ⚠️ CRITICAL WARNING: NEVER ADD DEMO MODE TO THIS APPLICATION
+// The client has explicitly forbidden ANY form of demo, mock, or test mode.
+// This application REQUIRES a live database connection to function.
+// DO NOT add any demo mode, mock data, or bypass mechanisms.
+
 const express = require('express');
 
-module.exports = function createAnalyticsRouter({ googleAuth, repositories, cacheService, db, isDemo }) {
+module.exports = function createAnalyticsRouter({ googleAuth, repositories, cacheService, db }) {
   const router = express.Router();
 
   // Soft-auth metrics for dashboard
   router.get('/dashboard/metrics', googleAuth.softAuthenticate(), async (req, res) => {
     res.set('X-Route','dashboard-soft');
     try {
-      if (isDemo && isDemo()) {
-        return res.json({ metrics: { shiftsToday: 12, openShifts: 3, staffOnDuty: 27, fillRate: 92, avgResponseTime: 180, overtimeHours: 14, fatigueAlerts: 1, upcomingShifts: [] }, userStats: { hoursThisWeek: 32, shiftsCompleted: 4, nextShift: null, fatigueScore: 2, consecutiveDays: 2 }, alerts: [] });
-      }
       const cached = await cacheService.get('metrics', { type: 'dashboard_soft', id: 'global' }).catch(() => null);
       if (cached) { return res.json({ metrics: cached, userStats: {}, alerts: [] }); }
       const today = new Date().toISOString().slice(0,10);

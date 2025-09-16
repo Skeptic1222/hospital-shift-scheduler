@@ -10,9 +10,8 @@ module.exports = function createAuthRouter({ googleAuth, cacheService }) {
   });
 
   router.post('/auth/logout', googleAuth.authenticate(), async (req, res) => {
-    try { await cacheService.del('session', { userId: req.user.sub }); res.json({ success: true }); } catch { res.status(500).json({ error: 'Logout failed' }); }
+    try { await cacheService.del('session', { userId: req.user.id || req.user.sub }); res.json({ success: true }); } catch { res.status(500).json({ error: 'Logout failed' }); }
   });
 
   return router;
 };
-

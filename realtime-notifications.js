@@ -17,18 +17,9 @@ const webpush = require('web-push');
 class RealtimeNotificationSystem {
     constructor(server, config) {
         this.config = config;
-        this.skipExternals = process.env.SKIP_EXTERNALS === 'true';
-        if (this.skipExternals) {
-            // No-op Redis interface
-            const noop = async () => undefined;
-            this.redis = { lpush: noop, get: async () => null, setex: noop, info: async () => '', dbsize: async () => 0, keys: async () => [] };
-            this.pubClient = { publish: noop };
-            this.subClient = { subscribe: noop, on: () => {} };
-        } else {
-            this.redis = new Redis({ ...config.redis, lazyConnect: true });
-            this.pubClient = new Redis({ ...config.redis, lazyConnect: true });
-            this.subClient = new Redis({ ...config.redis, lazyConnect: true });
-        }
+        this.redis = new Redis({ ...config.redis, lazyConnect: true });
+        this.pubClient = new Redis({ ...config.redis, lazyConnect: true });
+        this.subClient = new Redis({ ...config.redis, lazyConnect: true });
         this.db = db;
         this.repositories = repositories;
         this.rolePermissions = config.rolePermissions || {
@@ -65,9 +56,7 @@ class RealtimeNotificationSystem {
         this.setupSocketHandlers();
         
         // Initialize notification queue processor
-        if (!this.skipExternals) {
-            this.startQueueProcessor();
-        }
+        this.startQueueProcessor();
         
         // Track active connections for presence
         this.activeConnections = new Map();

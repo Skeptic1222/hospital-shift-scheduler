@@ -98,7 +98,9 @@ const Dashboard = () => {
       // Graceful fallback: populate safe defaults instead of blocking the UI
       // This addresses mobile environments where the first fetch may fail
       // (e.g., captive portals, flaky radio, or strict proxies)
-      try { console.warn('Dashboard metrics failed, showing safe defaults:', err?.message || err); } catch (_) {}
+      try { console.warn('Dashboard metrics failed, showing safe defaults:', err?.message || err); } catch (_) {
+        // Ignore logging errors
+      }
       setMetrics(prev => prev && Object.keys(prev).length ? prev : {
         shiftsToday: 0,
         openShifts: 0,

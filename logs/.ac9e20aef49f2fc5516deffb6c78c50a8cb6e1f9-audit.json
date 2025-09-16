@@ -1,0 +1,25 @@
+{
+    "keep": {
+        "days": true,
+        "amount": 30
+    },
+    "auditLog": "/mnt/c/inetpub/wwwroot/scheduler/logs/.ac9e20aef49f2fc5516deffb6c78c50a8cb6e1f9-audit.json",
+    "files": [
+        {
+            "date": 1757665820851,
+            "name": "/mnt/c/inetpub/wwwroot/scheduler/logs/access-2025-09-12.log",
+            "hash": "2a176fbba0ebdbe1d7e9bb7edba8fa68ce537f2e023f8affb3f76e98196dae75"
+        },
+        {
+            "date": 1757800499566,
+            "name": "/mnt/c/inetpub/wwwroot/scheduler/logs/access-2025-09-13.log",
+            "hash": "501c815b92ae6f156d6247eb9d45f79a3932580cc2157d46acaa0cb115e03ecd"
+        },
+        {
+            "date": 1757834582748,
+            "name": "/mnt/c/inetpub/wwwroot/scheduler/logs/access-2025-09-14.log",
+            "hash": "b65e1ebd2bf2c15bff19b0f4fd5cc29d248a2885df26abc84bb213ba99c75ac0"
+        }
+    ],
+    "hashType": "sha256"
+}

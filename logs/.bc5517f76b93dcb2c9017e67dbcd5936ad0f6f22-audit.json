@@ -1,0 +1,475 @@
+{
+    "keep": {
+        "days": true,
+        "amount": 90
+    },
+    "auditLog": "/mnt/c/inetpub/wwwroot/scheduler/logs/.bc5517f76b93dcb2c9017e67dbcd5936ad0f6f22-audit.json",
+    "files": [
+        {
+            "date": 1757665820828,
+            "name": "/mnt/c/inetpub/wwwroot/scheduler/logs/error-2025-09-12.log",
+            "hash": "a420fe4fe3077345604183b7a79f4cd44c543eb8543f284b0c75ede0220eee00"
+        },
+        {
+            "date": 1757800499531,
+            "name": "/mnt/c/inetpub/wwwroot/scheduler/logs/error-2025-09-13.log",
+            "hash": "918e1fad8151178cc31afa98073077f3a5b1fd270263a8a22c24dd44b661f12b"
+        },
+        {
+            "date": 1757834582716,
+            "name": "/mnt/c/inetpub/wwwroot/scheduler/logs/error-2025-09-14.log.118",
+            "hash": "3a99e8feadc3bb0a7c366d8a0117b0c9f30103e4b3161176dd42aed9cc7ac279"
+        },
+        {
+            "date": 1757975073111,
+            "name": "/mnt/c/inetpub/wwwroot/scheduler/logs/error-2025-09-15.log",
+            "hash": "204a194b7aaf673200f3609e1b38c92eb49a690b8750833f4012d8729535246c"
+        },
+        {
+            "date": 1757975076275,
+            "name": "/mnt/c/inetpub/wwwroot/scheduler/logs/error-2025-09-15.log.1",
+            "hash": "188be5ae6bdbe6c7b94de4eb4f61c42b97fec607040c9332b29e245e7a07aa5a"
+        },
+        {
+            "date": 1757975079234,
+            "name": "/mnt/c/inetpub/wwwroot/scheduler/logs/error-2025-09-15.log.2",
+            "hash": "2721668edb1b409dad966732f0139cb2a0b256fee826949ef146d3e950ff51d9"
+        },
+        {
+            "date": 1757975082251,
+            "name": "/mnt/c/inetpub/wwwroot/scheduler/logs/error-2025-09-15.log.3",
+            "hash": "c7c3c81bda49176b0d7ddca4008aeb773544f6cbc53cbc6cbcf67a891668eb17"
+        },
+        {
+            "date": 1757975086816,
+            "name": "/mnt/c/inetpub/wwwroot/scheduler/logs/error-2025-09-15.log.4",
+            "hash": "e78978ac5ec43380ef5d02ff2d4a31770ffbf244fa1e9ccc8d636f5a95e95ffb"
+        },
+        {
+            "date": 1757975089904,
+            "name": "/mnt/c/inetpub/wwwroot/scheduler/logs/error-2025-09-15.log.5",
+            "hash": "19b69e0b24f244005101b1c98fa61f17cc4bd064f489d56f40ecf2dcbc0f46d0"
+        },
+        {
+            "date": 1757975092850,
+            "name": "/mnt/c/inetpub/wwwroot/scheduler/logs/error-2025-09-15.log.6",
+            "hash": "fcaded2faf4fbb040ec5d51ddee33614157954c0a675c2a151e3cbd9383a18f7"
+        },
+        {
+            "date": 1757975095886,
+            "name": "/mnt/c/inetpub/wwwroot/scheduler/logs/error-2025-09-15.log.7",
+            "hash": "035d6e2cf28faac760a8990c4f60075b94acaadabef03b52d43d445f88117630"
+        },
+        {
+            "date": 1757975098977,
+            "name": "/mnt/c/inetpub/wwwroot/scheduler/logs/error-2025-09-15.log.8",
+            "hash": "c21595204777f37248b54b09f66d36cef5bbb99a6a9dc8443856dd9f8e298c78"
+        },
+        {
+            "date": 1757975102325,
+            "name": "/mnt/c/inetpub/wwwroot/scheduler/logs/error-2025-09-15.log.9",
+            "hash": "2726e8b62425c86bc7e44466d0ac03128c47ecdf3536b69f783c4a3296a62085"
+        },
+        {
+            "date": 1757975105528,
+            "name": "/mnt/c/inetpub/wwwroot/scheduler/logs/error-2025-09-15.log.10",
+            "hash": "bf27b92443160d25dff10085011cbea87b1d9dbff2c8948b1f185937e357b8cc"
+        },
+        {
+            "date": 1757975108795,
+            "name": "/mnt/c/inetpub/wwwroot/scheduler/logs/error-2025-09-15.log.11",
+            "hash": "89a9870cf9a95247f733080796142ae35991ef3c22cc73eb45175f4ade2d6462"
+        },
+        {
+            "date": 1757975112245,
+            "name": "/mnt/c/inetpub/wwwroot/scheduler/logs/error-2025-09-15.log.12",
+            "hash": "9647d78674cd814a7248a804d3908261f17ae16f4f4f8fc95ffff3043ca81df3"
+        },
+        {
+            "date": 1757975118027,
+            "name": "/mnt/c/inetpub/wwwroot/scheduler/logs/error-2025-09-15.log.13",
+            "hash": "c1ab44e7f6a5a98edd3b319000a17a93dd1d803247c5401efa98324963e760d7"
+        },
+        {
+            "date": 1757975122270,
+            "name": "/mnt/c/inetpub/wwwroot/scheduler/logs/error-2025-09-15.log.14",
+            "hash": "2e7488f4d2df96043b35def6ee88271f095554d4feaa58fd60c253ba78a75b6a"
+        },
+        {
+            "date": 1757975126342,
+            "name": "/mnt/c/inetpub/wwwroot/scheduler/logs/error-2025-09-15.log.15",
+            "hash": "3ab64b95cd7ce7527fc97bb1a0946a2f26250cd6f97e81ef35f69730b1373147"
+        },
+        {
+            "date": 1757975131847,
+            "name": "/mnt/c/inetpub/wwwroot/scheduler/logs/error-2025-09-15.log.16",
+            "hash": "36c5564bfb9757e8d637237f86b41edecfd9c15f49cb6e96e7814ffa0780de85"
+        },
+        {
+            "date": 1757975136319,
+            "name": "/mnt/c/inetpub/wwwroot/scheduler/logs/error-2025-09-15.log.17",
+            "hash": "36922b3ea47dfb8e73f7fb9192db1b45a6cb86b3f16f7be943dae3c455df2f69"
+        },
+        {
+            "date": 1757975140268,
+            "name": "/mnt/c/inetpub/wwwroot/scheduler/logs/error-2025-09-15.log.18",
+            "hash": "7a3e2176ff59ecbbdad2e0da09bf020c0d851bb508d802ecef8a7c7f2574e8c4"
+        },
+        {
+            "date": 1757975143996,
+            "name": "/mnt/c/inetpub/wwwroot/scheduler/logs/error-2025-09-15.log.19",
+            "hash": "6b0109c115e1358905d80d83fda3db0d9d96b7b29d15332ad603ab8924aed9e1"
+        },
+        {
+            "date": 1757975147560,
+            "name": "/mnt/c/inetpub/wwwroot/scheduler/logs/error-2025-09-15.log.20",
+            "hash": "509d16fb4bf8c71c632bc733bf2fa99b10d505e789065a3316a35b99777f8312"
+        },
+        {
+            "date": 1757975152706,
+            "name": "/mnt/c/inetpub/wwwroot/scheduler/logs/error-2025-09-15.log.21",
+            "hash": "46e1e8926baf451bb8618028586ba5433f1d99b9155f46985d317fed1525e1fc"
+        },
+        {
+            "date": 1757975156254,
+            "name": "/mnt/c/inetpub/wwwroot/scheduler/logs/error-2025-09-15.log.22",
+            "hash": "6fb35b4aeadf8e9971caef5491a029b70f3d64c60b220815daeb09716be3e1fb"
+        },
+        {
+            "date": 1757975159756,
+            "name": "/mnt/c/inetpub/wwwroot/scheduler/logs/error-2025-09-15.log.23",
+            "hash": "e6dc097d0267e3b6d835b1a3677042f7632c839f68718ed575f743949175dca5"
+        },
+        {
+            "date": 1757975163330,
+            "name": "/mnt/c/inetpub/wwwroot/scheduler/logs/error-2025-09-15.log.24",
+            "hash": "4388d9a288746ff7dafac57fc6d706d6424ea68eb0cbecd6fd8c0a5b7032cf5c"
+        },
+        {
+            "date": 1757975167023,
+            "name": "/mnt/c/inetpub/wwwroot/scheduler/logs/error-2025-09-15.log.25",
+            "hash": "107642818de89ffa59f7e0f1ac949f7746995c7f5a0c976cb9a0337bcbb6eb79"
+        },
+        {
+            "date": 1757975170839,
+            "name": "/mnt/c/inetpub/wwwroot/scheduler/logs/error-2025-09-15.log.26",
+            "hash": "fbd4330b20e239a865543c6a8e45565a3acb53d8f1bd2e7369b50456d7ee3352"
+        },
+        {
+            "date": 1757975174618,
+            "name": "/mnt/c/inetpub/wwwroot/scheduler/logs/error-2025-09-15.log.27",
+            "hash": "1e41d16909570cc5b18fa0943e580c8fba2ee2b9d3c0ea9f2af6917bbc34fec2"
+        },
+        {
+            "date": 1757975178531,
+            "name": "/mnt/c/inetpub/wwwroot/scheduler/logs/error-2025-09-15.log.28",
+            "hash": "8b9bde02e422448c627e1bfe75586e8c88525a9c3e6842b6ce9aee24460c589d"
+        },
+        {
+            "date": 1757975182434,
+            "name": "/mnt/c/inetpub/wwwroot/scheduler/logs/error-2025-09-15.log.29",
+            "hash": "f93bbd88c560fc89c6da6597d750307e8e394ca266d514dab1db2b402d8b0a45"
+        },
+        {
+            "date": 1757975187656,
+            "name": "/mnt/c/inetpub/wwwroot/scheduler/logs/error-2025-09-15.log.30",
+            "hash": "cf102096e8271e82d76e7ad8c60df20dd00c477931917f461ad0b4301460b022"
+        },
+        {
+            "date": 1757975191386,
+            "name": "/mnt/c/inetpub/wwwroot/scheduler/logs/error-2025-09-15.log.31",
+            "hash": "0aed6564aaac4df9a761b4eca762aa0d245857aa8d302be3c7d337710c8059d9"
+        },
+        {
+            "date": 1757975195920,
+            "name": "/mnt/c/inetpub/wwwroot/scheduler/logs/error-2025-09-15.log.32",
+            "hash": "6f47b5ef86e96a61681cee63e0de363ec0ab83f929b2da847c3c4f9e88af34b3"
+        },
+        {
+            "date": 1757975200408,
+            "name": "/mnt/c/inetpub/wwwroot/scheduler/logs/error-2025-09-15.log.33",
+            "hash": "ae2be9b7f8be2e1192f6ccf4deac28bd491becbc5ea59ea8ead0efe63d9920d6"
+        },
+        {
+            "date": 1757975204675,
+            "name": "/mnt/c/inetpub/wwwroot/scheduler/logs/error-2025-09-15.log.34",
+            "hash": "9905fedf3e52994261567ad6b9d3feeab2d338bcfb50599982738c833b39abc7"
+        },
+        {
+            "date": 1757975209277,
+            "name": "/mnt/c/inetpub/wwwroot/scheduler/logs/error-2025-09-15.log.35",
+            "hash": "077a8a52cdd465f06016db03896fe8e6ae9c5bf11645d4900f320ebb3c1fa716"
+        },
+        {
+            "date": 1757975213494,
+            "name": "/mnt/c/inetpub/wwwroot/scheduler/logs/error-2025-09-15.log.36",
+            "hash": "7257dd16343a192bb26e14c303d453658ab8ca7df03f4e31cf5b9aa6499f5816"
+        },
+        {
+            "date": 1757975218447,
+            "name": "/mnt/c/inetpub/wwwroot/scheduler/logs/error-2025-09-15.log.37",
+            "hash": "3f5c22433be292d730510338e911e79fb7e090e8fd8abc32c9b36e651ca08089"
+        },
+        {
+            "date": 1757975222216,
+            "name": "/mnt/c/inetpub/wwwroot/scheduler/logs/error-2025-09-15.log.38",
+            "hash": "996541f51d7a1e2ccad34d23a6488c455ac688957f5480af9957336819feaba4"
+        },
+        {
+            "date": 1757975225945,
+            "name": "/mnt/c/inetpub/wwwroot/scheduler/logs/error-2025-09-15.log.39",
+            "hash": "68effea497401c32b961ee16dcc5713f2cdfdd7846ec944c3f27e767609369b0"
+        },
+        {
+            "date": 1757975229802,
+            "name": "/mnt/c/inetpub/wwwroot/scheduler/logs/error-2025-09-15.log.40",
+            "hash": "05562cce0e7f1f1bf7740e3ad7661b567eb969a77e31d25edad8c68d4bd1ae02"
+        },
+        {
+            "date": 1757975233824,
+            "name": "/mnt/c/inetpub/wwwroot/scheduler/logs/error-2025-09-15.log.41",
+            "hash": "187f2899d32ff55b0af1d593b30d9bc3f125c98f5802139baaf0a36d5fa3df44"
+        },
+        {
+            "date": 1757975237702,
+            "name": "/mnt/c/inetpub/wwwroot/scheduler/logs/error-2025-09-15.log.42",
+            "hash": "0355f27e91ab6ba1ca62d75c007407a8d75cee68be00a24394189468f3a40dfe"
+        },
+        {
+            "date": 1757975241727,
+            "name": "/mnt/c/inetpub/wwwroot/scheduler/logs/error-2025-09-15.log.43",
+            "hash": "b85333ed0c8c4142d82aedf30a1c7349049909f0a8a3791e58fbea0ee9373575"
+        },
+        {
+            "date": 1757975245677,
+            "name": "/mnt/c/inetpub/wwwroot/scheduler/logs/error-2025-09-15.log.44",
+            "hash": "fb8503054850057ecff353901c52669910e6035cbe06fbb7b53c4f2c41895ac2"
+        },
+        {
+            "date": 1757975249791,
+            "name": "/mnt/c/inetpub/wwwroot/scheduler/logs/error-2025-09-15.log.45",
+            "hash": "3898ae995df9dc374de7d3ad7b17a9c222da04df0db90665fc05eff49b82a767"
+        },
+        {
+            "date": 1757975255256,
+            "name": "/mnt/c/inetpub/wwwroot/scheduler/logs/error-2025-09-15.log.46",
+            "hash": "84f7d67f20bfebd846d262f82cf89f2edc4ad07007ac5887e25f4335802825c3"
+        },
+        {
+            "date": 1757975259472,
+            "name": "/mnt/c/inetpub/wwwroot/scheduler/logs/error-2025-09-15.log.47",
+            "hash": "09da6b60640b53e30517998dd702457284c33997c92f840547d356c52e090b7f"
+        },
+        {
+            "date": 1757975263732,
+            "name": "/mnt/c/inetpub/wwwroot/scheduler/logs/error-2025-09-15.log.48",
+            "hash": "bc07786070fb3cbb8e7732839bc5b2bc5ddf5e199cd80e839e835108519fbaae"
+        },
+        {
+            "date": 1757975267956,
+            "name": "/mnt/c/inetpub/wwwroot/scheduler/logs/error-2025-09-15.log.49",
+            "hash": "29d7fe4bcaab86bf4787b018564125886ec6f949618c5955f372ac0cbf9c2f5c"
+        },
+        {
+            "date": 1757975272323,
+            "name": "/mnt/c/inetpub/wwwroot/scheduler/logs/error-2025-09-15.log.50",
+            "hash": "b88d11a807c6b015a416acbf8f249a97985a6178efdb08c985e1d94d4c0c7e10"
+        },
+        {
+            "date": 1757975276667,
+            "name": "/mnt/c/inetpub/wwwroot/scheduler/logs/error-2025-09-15.log.51",
+            "hash": "fe9634c4040029869064dc04fa3f66d7c9ebb71dba587e17043093757d2f345b"
+        },
+        {
+            "date": 1757975280874,
+            "name": "/mnt/c/inetpub/wwwroot/scheduler/logs/error-2025-09-15.log.52",
+            "hash": "aa4767fd75c4e1bd2fd28964938c3b54f40a050d8a71f5f4c3a8605301fb289a"
+        },
+        {
+            "date": 1757975286899,
+            "name": "/mnt/c/inetpub/wwwroot/scheduler/logs/error-2025-09-15.log.53",
+            "hash": "84e2334724b7f5a633fe889630a3a694b3b43cff93f955b24da0cd9f5425be93"
+        },
+        {
+            "date": 1757975292077,
+            "name": "/mnt/c/inetpub/wwwroot/scheduler/logs/error-2025-09-15.log.54",
+            "hash": "2d7086613d35dabab32cfcbcf5a52a6a8906c5ff83435bf4c59c377017538b0a"
+        },
+        {
+            "date": 1757975297378,
+            "name": "/mnt/c/inetpub/wwwroot/scheduler/logs/error-2025-09-15.log.55",
+            "hash": "29f76815d72da5d045b841d91713e6d2070f6ecdd1ac62d6f5e08d60093eb73a"
+        },
+        {
+            "date": 1757975302188,
+            "name": "/mnt/c/inetpub/wwwroot/scheduler/logs/error-2025-09-15.log.56",
+            "hash": "a61fe4cba6a46367591c4fc0041961737507d491f936800f93c8610971198dca"
+        },
+        {
+            "date": 1757975306535,
+            "name": "/mnt/c/inetpub/wwwroot/scheduler/logs/error-2025-09-15.log.57",
+            "hash": "be5a74bb9696675b91859c65300635e6a90d241732b060159cb12a2fc70ec091"
+        },
+        {
+            "date": 1757975310805,
+            "name": "/mnt/c/inetpub/wwwroot/scheduler/logs/error-2025-09-15.log.58",
+            "hash": "f0fd2acff0995a18c86b89eff731cf97dadf7d0c19305137c53dae6ac60dafdd"
+        },
+        {
+            "date": 1757975316632,
+            "name": "/mnt/c/inetpub/wwwroot/scheduler/logs/error-2025-09-15.log.59",
+            "hash": "aa3fa7b24625858cc25bbc52d11d79d501ed553f38854f6b6f19e735eb336240"
+        },
+        {
+            "date": 1757975323055,
+            "name": "/mnt/c/inetpub/wwwroot/scheduler/logs/error-2025-09-15.log.60",
+            "hash": "aa902aa76c96d860f46aaf1b5883ce38dc01104e4398aafcee9d7ae06aedd33d"
+        },
+        {
+            "date": 1757975327657,
+            "name": "/mnt/c/inetpub/wwwroot/scheduler/logs/error-2025-09-15.log.61",
+            "hash": "8e1e0e2e6f37d664163a90391cfe37916e9d8aa10171f6149e8bc7389b99fb46"
+        },
+        {
+            "date": 1757975332218,
+            "name": "/mnt/c/inetpub/wwwroot/scheduler/logs/error-2025-09-15.log.62",
+            "hash": "e4e3cef77849f2e122d768810ea9adc6a8b5cff45c2ed85a102d9d5c9d9fe3fc"
+        },
+        {
+            "date": 1757975337014,
+            "name": "/mnt/c/inetpub/wwwroot/scheduler/logs/error-2025-09-15.log.63",
+            "hash": "bfa54c2003461877e5183dd7344cf7c47c7257bb3a7ab308f2399e3dc2d178b5"
+        },
+        {
+            "date": 1757975341804,
+            "name": "/mnt/c/inetpub/wwwroot/scheduler/logs/error-2025-09-15.log.64",
+            "hash": "dc36236c68800de3031a8cb1434b471a534f8df46be0b0f66d475bf19a4001a8"
+        },
+        {
+            "date": 1757975346517,
+            "name": "/mnt/c/inetpub/wwwroot/scheduler/logs/error-2025-09-15.log.65",
+            "hash": "37de532fcbc4434b8f4d58f7051c180d44552ec13301cab4a7d8d30e71d4a7e4"
+        },
+        {
+            "date": 1757975352499,
+            "name": "/mnt/c/inetpub/wwwroot/scheduler/logs/error-2025-09-15.log.66",
+            "hash": "c88cc4fc63ab69a3c9720b2f166d8e54824ef7169fa509d995480a9bb2295793"
+        },
+        {
+            "date": 1757975357166,
+            "name": "/mnt/c/inetpub/wwwroot/scheduler/logs/error-2025-09-15.log.67",
+            "hash": "0aa4a96bb53fc0bbcf18f22ad97be53638c84779a733bb66bb0ec0f43d792be5"
+        },
+        {
+            "date": 1757975361893,
+            "name": "/mnt/c/inetpub/wwwroot/scheduler/logs/error-2025-09-15.log.68",
+            "hash": "7a9055a0c76134a1b47e24061f8ba892f5c0c604544c2b3ddd6d84d15ca09387"
+        },
+        {
+            "date": 1757975366806,
+            "name": "/mnt/c/inetpub/wwwroot/scheduler/logs/error-2025-09-15.log.69",
+            "hash": "ac52176357a748491159e5fd44e3d59f532d660a39b6f8a77363f2b7c39ff779"
+        },
+        {
+            "date": 1757975371504,
+            "name": "/mnt/c/inetpub/wwwroot/scheduler/logs/error-2025-09-15.log.70",
+            "hash": "c6e7f808be0398a0080a929651fde90a1772cc4a9aa4f7092c6e06b8eb9355fb"
+        },
+        {
+            "date": 1757975378993,
+            "name": "/mnt/c/inetpub/wwwroot/scheduler/logs/error-2025-09-15.log.71",
+            "hash": "cec606436e0a8592df61d7fc1b168477911588950f60b065eef2715db39ec006"
+        },
+        {
+            "date": 1757975399879,
+            "name": "/mnt/c/inetpub/wwwroot/scheduler/logs/error-2025-09-15.log.72",
+            "hash": "2a73d9a24088ec6e8a8b36278f8b8e8789a3769fb187a17963c7fc78c5db2003"
+        },
+        {
+            "date": 1757975406981,
+            "name": "/mnt/c/inetpub/wwwroot/scheduler/logs/error-2025-09-15.log.73",
+            "hash": "3185ee319e48dc03bf622a0c93fc44aa8bde00e73e5882333cb807ac2f989cd1"
+        },
+        {
+            "date": 1757975412940,
+            "name": "/mnt/c/inetpub/wwwroot/scheduler/logs/error-2025-09-15.log.74",
+            "hash": "ec6bccf5732b909cb05dfb66ca2514c42006f32c6613c3923621d0b31e521da6"
+        },
+        {
+            "date": 1757975420108,
+            "name": "/mnt/c/inetpub/wwwroot/scheduler/logs/error-2025-09-15.log.75",
+            "hash": "2bb24daf5a9ee4106214eec83cbb45e414298ccd5f296eb391da3026a62050a5"
+        },
+        {
+            "date": 1757975426211,
+            "name": "/mnt/c/inetpub/wwwroot/scheduler/logs/error-2025-09-15.log.76",
+            "hash": "cd9255c593c7d349ce9e3deadd9727728e286f86f7c4d2432e05f376ac69f94c"
+        },
+        {
+            "date": 1757975432237,
+            "name": "/mnt/c/inetpub/wwwroot/scheduler/logs/error-2025-09-15.log.77",
+            "hash": "040cdd8c79e08587aa3f90fc73357b31f0a7156490404454a5299be275ff31e0"
+        },
+        {
+            "date": 1757975438073,
+            "name": "/mnt/c/inetpub/wwwroot/scheduler/logs/error-2025-09-15.log.78",
+            "hash": "2131a562ac0f6aea83e1d119110037b516381400e516e3322f28db2520b30fff"
+        },
+        {
+            "date": 1757975444109,
+            "name": "/mnt/c/inetpub/wwwroot/scheduler/logs/error-2025-09-15.log.79",
+            "hash": "e2af5f5ee844a3ae07fa3f1ed7c64b745cf2deb9b5d43be38d312f838f449741"
+        },
+        {
+            "date": 1757975450155,
+            "name": "/mnt/c/inetpub/wwwroot/scheduler/logs/error-2025-09-15.log.80",
+            "hash": "5e9888c24dc3fa6b41f85c851a063be50022417435c4055119f8832e9a53513e"
+        },
+        {
+            "date": 1757975457235,
+            "name": "/mnt/c/inetpub/wwwroot/scheduler/logs/error-2025-09-15.log.81",
+            "hash": "793d04aeca837b67e486e62c3e791f89b831de91e8bb2aa8a554e1494654d948"
+        },
+        {
+            "date": 1757975463363,
+            "name": "/mnt/c/inetpub/wwwroot/scheduler/logs/error-2025-09-15.log.82",
+            "hash": "3c9fac6d8aaaeae5201bdaa38c20c66d9e115c793ce3f7e39ae0913cdd337617"
+        },
+        {
+            "date": 1757975469254,
+            "name": "/mnt/c/inetpub/wwwroot/scheduler/logs/error-2025-09-15.log.83",
+            "hash": "6b269f4175237795f9ebb47cda3b395cb07d59d6511594c3a7c9adb58f644317"
+        },
+        {
+            "date": 1757975475979,
+            "name": "/mnt/c/inetpub/wwwroot/scheduler/logs/error-2025-09-15.log.84",
+            "hash": "4930b3749c5ba980822d11a5b858f4777186fdccb7296020aaa03cb4f7a4ff4c"
+        },
+        {
+            "date": 1757975484198,
+            "name": "/mnt/c/inetpub/wwwroot/scheduler/logs/error-2025-09-15.log.85",
+            "hash": "82aa2a4bdf50758e58d51609447478c445a6d7142561f21d95f7f9f3247550f1"
+        },
+        {
+            "date": 1757975491453,
+            "name": "/mnt/c/inetpub/wwwroot/scheduler/logs/error-2025-09-15.log.86",
+            "hash": "052d4d77c1dc7ee4ba6702b0e4f4dbdb2791c46b25edcf51f95be97cda45bbe4"
+        },
+        {
+            "date": 1757975497223,
+            "name": "/mnt/c/inetpub/wwwroot/scheduler/logs/error-2025-09-15.log.87",
+            "hash": "e9089d877cf78f56f4c26b4a47ec8480da9ee57caa3af799ed2e657884ce2761"
+        },
+        {
+            "date": 1757975502754,
+            "name": "/mnt/c/inetpub/wwwroot/scheduler/logs/error-2025-09-15.log.88",
+            "hash": "9545618bb62315dfc1f62b0f909cee52dc77a0ac4bcd747d886deae84dd7ec9c"
+        },
+        {
+            "date": 1757975527196,
+            "name": "/mnt/c/inetpub/wwwroot/scheduler/logs/error-2025-09-15.log.89",
+            "hash": "5989cbd62ebf52283bd84632245d9b52a0ba47af41ee25fb95cfd391d1d63169"
+        }
+    ],
+    "hashType": "sha256"
+}

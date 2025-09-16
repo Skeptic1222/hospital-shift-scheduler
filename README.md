@@ -1,6 +1,6 @@
 # Hospital Shift Scheduler
 
-Hospital shift scheduling system with First-Come, First-Served (FCFS) distribution, real-time notifications, and staff management. The app runs cleanly in an offline/demo mode (no external services) and can be hosted behind IIS at `/scheduler`.
+Hospital shift scheduling system with First-Come, First-Served (FCFS) distribution, real-time notifications, and staff management. The app is hosted behind IIS at `/scheduler` (no ports in URLs).
 
 ## Features
 
@@ -16,18 +16,18 @@ Hospital shift scheduling system with First-Come, First-Served (FCFS) distributi
 
 - Frontend: React 18, Material UI 5, Redux Toolkit
 - Backend: Node.js (Express), Socket.io (polling transport in prod/IIS)
-- Database: SQL Server (schema + procs provided; demo mode skips DB)
-- Cache: Redis (skipped in demo mode)
+- Database: SQL Server (schema + procs provided)
+- Cache: Redis
 - Authentication: Google ID token verification (server-side tokeninfo); Auth0 scaffolding present but not wired
-- Deployment: IIS on Windows Server (reverse proxy to Node API at port 3001)
+- Deployment: IIS on Windows Server (reverse proxy to the internal Node API service)
 
 ## Installation
 
 ### Prerequisites
 
 - Node.js 18+
-- SQL Server Express (optional in demo mode)
-- Redis (optional in demo mode)
+- SQL Server Express
+- Redis
 - IIS with URL Rewrite/ARR (for production behind `/scheduler`)
 
 ### Setup
@@ -49,22 +49,18 @@ cp .env.example .env
 # Edit .env with your configuration
 ```
 
-4. Set up the database (skip in demo mode):
+4. Set up the database:
 ```bash
 npm run db:migrate
 npm run db:seed
 ```
 
 5. Start the API
-- Demo/offline mode (no external dependencies):
-  - Windows PowerShell (in `C:\inetpub\wwwroot\scheduler`):
-    - `$env:SKIP_EXTERNALS='true'`
-    - `node server.js`
-  - Or run the standalone demo server: `node server-demo.js`
-- WSL dev (proxying to Windows IIS):
-  - `DEMO_MODE=true SKIP_EXTERNALS=true ./scripts/start-api-wsl.sh`
+- Windows PowerShell (in `C:\inetpub\wwwroot\scheduler`):
+  - `node server.js`
+- WSL dev (proxying to Windows IIS): use your standard start script.
 
-Then browse to `http://localhost/scheduler` when behind IIS, or `http://localhost:3001` when serving the built UI from the Node server.
+Then browse to `http://localhost/scheduler` behind IIS (no ports).
 
 ## Development
 
@@ -75,15 +71,10 @@ Then browse to `http://localhost/scheduler` when behind IIS, or `http://localhos
 - `npm test` — Run Jest with coverage (see jest.setup for defaults)
 - `npm run build` — Build React UI to `build/`
 - `npm run lint` — Lint with ESLint
+ - `npm run db:check` — Quick DB connectivity check
 
-### Demo Mode
-
-Run with demo data (no external services required):
-```bash
-export DEMO_MODE=true
-export SKIP_EXTERNALS=true
-node server.js    # or: node server-demo.js
-```
+### No Demo Mode
+This repository does not support a demo/offline mode. Do not introduce any demo toggles or bypasses in code or configuration.
 
 ### Test Accounts
 
@@ -111,11 +102,11 @@ Docker Compose is not currently included; use IIS + Node per the included script
 Key variables (see `.env.example` for the full list):
 
 - `GOOGLE_CLIENT_ID` / `REACT_APP_GOOGLE_CLIENT_ID` — Google ID token audience (used in dev/prod respectively)
-- `DB_SERVER`, `DB_NAME`, `DB_USER`, `DB_PASSWORD` — SQL Server (skip in demo mode)
-- `REDIS_HOST`, `REDIS_PORT` — Redis (skip in demo mode)
+- `DB_SERVER`, `DB_NAME`, `DB_USER`, `DB_PASSWORD` — SQL Server
+- `REDIS_HOST`, `REDIS_PORT` — Redis
 - `ALLOWED_ORIGINS` — Allowed CORS origins
 - `REACT_APP_PUBLIC_BASE` — Public base URL for client (e.g., `http://localhost/scheduler`)
-- `ADMIN_EMAILS`, `SUPERVISOR_EMAILS`, `REACT_APP_ADMIN_EMAILS`, `REACT_APP_SUPERVISOR_EMAILS` — role elevation in demo/dev
+- `ADMIN_EMAILS`, `SUPERVISOR_EMAILS`, `REACT_APP_ADMIN_EMAILS`, `REACT_APP_SUPERVISOR_EMAILS` — optional role elevation via env
 
 ### FCFS Algorithm (overview)
 
@@ -127,13 +118,14 @@ The FCFS queue uses time windows and eligibility weighting:
 
 ## API Documentation
 
-See `API_DOCUMENTATION.md`. Many endpoints provide demo responses when `SKIP_EXTERNALS=true`.
+See `API_DOCUMENTATION.md` for endpoint details.
+Additional health: `/api/db/health` returns database connectivity status.
 
 ## Reverse Proxy (IIS/ARR)
 - The UI is hosted under `/scheduler`. CRA `homepage` is set accordingly so asset paths resolve.
-- IIS `web.config` proxies `/scheduler/api/*` and `/scheduler/socket.io/*` → `http://localhost:3001`.
+- IIS `web.config` proxies `/scheduler/api/*` (including `/scheduler/api/socket.io`) to your Node backend.
 - PWA icon requests can be served from `/api/assets/icon` when placeholders are needed.
-- Browser URLs stay portless; IIS proxies to port 3001.
+- Browser URLs stay portless; IIS proxies to the internal service.
 
 ## PWA Icons
 - Add branded icons to `public/`:
@@ -148,6 +140,44 @@ See `API_DOCUMENTATION.md`. Many endpoints provide demo responses when `SKIP_EXT
 - Audit logging endpoints/hooks
 - TLS is terminated at IIS/ARR (configure 1.2+ in IIS)
 - AuthN: Google ID tokens (tokeninfo) in current build; Auth0 scaffolding included for future MFA/BAA requirements
+
+## Logging & Monitoring
+
+The application includes comprehensive logging for debugging and compliance:
+
+### Log Files Location
+All logs are stored in the `logs/` directory within the project folder:
+
+| Log Type | Filename | Purpose | Retention |
+|----------|----------|---------|-----------|
+| **Application** | `logs/app-YYYY-MM-DD.log` | General activity and info | 30 days |
+| **Errors** | `logs/error-YYYY-MM-DD.log` | Errors and stack traces | 90 days |
+| **Audit** | `logs/audit-YYYY-MM-DD.log` | HIPAA compliance trail | 7 years |
+| **Performance** | `logs/performance-YYYY-MM-DD.log` | Response times & metrics | 7 days |
+| **Access** | `logs/access-YYYY-MM-DD.log` | HTTP request logs | 30 days |
+
+### Checking Logs for Errors
+```bash
+# View today's errors
+tail -f logs/error-$(date +%Y-%m-%d).log
+
+# Search for specific errors
+grep "ERROR" logs/error-*.log | tail -50
+
+# Monitor real-time activity
+tail -f logs/app-$(date +%Y-%m-%d).log
+```
+
+### Windows PowerShell
+```powershell
+# View recent errors
+Get-Content "logs\error-$(Get-Date -Format yyyy-MM-dd).log" -Tail 50
+
+# Monitor in real-time
+Get-Content "logs\app-$(Get-Date -Format yyyy-MM-dd).log" -Wait
+```
+
+See [LOG_MONITORING.md](./LOG_MONITORING.md) for detailed troubleshooting instructions.
 
 ## Contributing
 

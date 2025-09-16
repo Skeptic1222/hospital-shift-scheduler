@@ -1,22 +1,46 @@
 {
-  "name": "Shiftwise",
-  "short_name": "Shiftwise",
+  "name": "Hospital Shift Scheduler",
+  "short_name": "Scheduler",
+  "description": "HIPAA-compliant hospital shift scheduling with FCFS distribution",
   "start_url": "/scheduler/",
   "scope": "/scheduler/",
   "display": "standalone",
+  "theme_color": "#1976d2",
   "background_color": "#ffffff",
-  "theme_color": "#2563eb",
+  "orientation": "portrait",
+  "categories": ["medical", "productivity"],
   "icons": [
     {
-      "src": "android-chrome-192x192.png",
+      "src": "/scheduler/android-chrome-192x192.png",
       "sizes": "192x192",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
     },
     {
-      "src": "android-chrome-512x512.png",
+      "src": "/scheduler/android-chrome-512x512.png",
       "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/scheduler/apple-touch-icon.png",
+      "sizes": "180x180",
       "type": "image/png"
     }
-  ]
+  ],
+  "shortcuts": [
+    {
+      "name": "View Schedule",
+      "short_name": "Schedule",
+      "url": "/scheduler/dashboard",
+      "icons": [{ "src": "/scheduler/android-chrome-192x192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Available Shifts",
+      "short_name": "Shifts",
+      "url": "/scheduler/shifts",
+      "icons": [{ "src": "/scheduler/android-chrome-192x192.png", "sizes": "192x192" }]
+    }
+  ],
+  "prefer_related_applications": false
 }
-

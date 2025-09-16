@@ -5,7 +5,7 @@ Registers a Windows Task Scheduler job to auto-start the Node API on login.
 .DESCRIPTION
 Creates a scheduled task named 'Shiftwise-API-Autostart' that launches:
   node server.js
-in the repo directory, with environment variables set for demo/offline mode.
+in the repo directory.
 
 .PARAMETER RepoPath
 Path to the repository root (default: C:\inetpub\wwwroot\scheduler)
@@ -19,8 +19,7 @@ PS> .\scripts\register-api-autostart.ps1 -RepoPath 'C:\inetpub\wwwroot\scheduler
 #>
 param(
   [string]$RepoPath = 'C:\inetpub\wwwroot\scheduler',
-  [string]$NodePath = 'node.exe',
-  [switch]$DemoMode
+  [string]$NodePath = 'node.exe'
 )
 
 if (-not (Test-Path $RepoPath)) { throw "RepoPath not found: $RepoPath" }
@@ -37,9 +36,6 @@ $settings = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoi
 
 # Register with environment variables through the registry (Task Scheduler doesn't support inline env reliably)
 # We set variables at the user level for this process to inherit.
-if ($DemoMode) {
-  [Environment]::SetEnvironmentVariable('SKIP_EXTERNALS', 'true', 'User')
-}
 [Environment]::SetEnvironmentVariable('PORT', '3001', 'User')
 [Environment]::SetEnvironmentVariable('NODE_ENV', 'Production', 'User')
 [Environment]::SetEnvironmentVariable('TRUST_PROXY', '1', 'User')

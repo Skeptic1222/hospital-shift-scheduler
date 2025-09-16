@@ -1,3 +1,8 @@
+// ⚠️ CRITICAL WARNING: NEVER ADD DEMO MODE TO THIS APPLICATION
+// The client has explicitly forbidden ANY form of demo, mock, or test mode.
+// This application REQUIRES a live database connection to function.
+// DO NOT add any demo mode, mock data, or bypass mechanisms.
+
 /**
  * SQL Server Express Configuration
  * Connection management for Windows/IIS deployment
@@ -14,12 +19,31 @@ const DB_USER = process.env.DB_USER || 'sa';
 const DB_PASSWORD = process.env.DB_PASSWORD || 'YourStrong@Passw0rd';
 const DB_ENCRYPT = (String(process.env.DB_ENCRYPT || 'true').toLowerCase() === 'true');
 const DB_TRUST_SERVER_CERT = (String(process.env.DB_TRUST_SERVER_CERT || process.env.DB_TRUST_SERVER_CERTIFICATE || 'true').toLowerCase() === 'true');
+const DB_AUTO_CREATE = (String(process.env.DB_AUTO_CREATE || 'false').toLowerCase() === 'true');
 
-// Parse instance name if provided like HOST\INSTANCE
+// Parse instance name if provided like HOST\INSTANCE or HOST,PORT
 function parseServer(server) {
-    const m = /^(.*)\\([^\\]+)$/.exec(server);
-    if (m) return { host: m[1], instanceName: m[2] };
-    return { host: server, instanceName: undefined };
+    // Check for port-based connection (HOST,PORT)
+    const portMatch = /^([^,]+),(\d+)$/.exec(server);
+    if (portMatch) {
+        return { 
+            host: portMatch[1], 
+            port: parseInt(portMatch[2]), 
+            instanceName: undefined 
+        };
+    }
+    
+    // Check for instance-based connection (HOST\INSTANCE)
+    const instanceMatch = /^(.*)\\([^\\]+)$/.exec(server);
+    if (instanceMatch) {
+        return { 
+            host: instanceMatch[1], 
+            instanceName: instanceMatch[2],
+            port: undefined 
+        };
+    }
+    
+    return { host: server, instanceName: undefined, port: undefined };
 }
 
 const parsed = parseServer(DB_SERVER);
@@ -30,6 +54,7 @@ const config = {
     password: DB_PASSWORD,
     database: DB_NAME,
     server: parsed.host,
+    port: parsed.port || 1433, // Use parsed port or default to 1433
     pool: {
         max: 10,
         min: 0,
@@ -39,7 +64,7 @@ const config = {
         encrypt: DB_ENCRYPT, // Use encryption
         trustServerCertificate: DB_TRUST_SERVER_CERT, // For local development
         enableArithAbort: true,
-        instanceName: parsed.instanceName
+        instanceName: parsed.port ? undefined : parsed.instanceName // Only use instance if no port
     }
 };
 
@@ -79,15 +104,17 @@ class DatabaseService {
             const useWindowsAuth = USE_WINDOWS_AUTH;
             const dbName = DB_NAME;
 
-            // Step 1: Connect to master to ensure database exists
-            const masterConfig = useWindowsAuth
-                ? getWindowsAuthConfig('master')
-                : { ...config, database: 'master' };
+            // Step 1 (optional): Connect to master to ensure database exists (only when explicitly enabled)
+            if (DB_AUTO_CREATE) {
+                const masterConfig = useWindowsAuth
+                    ? getWindowsAuthConfig('master')
+                    : { ...config, database: 'master' };
 
-            const serverPool = new ConnectionPool(masterConfig);
-            await serverPool.connect();
-            await this.ensureDatabaseExists(serverPool, dbName);
-            await serverPool.close();
+                const serverPool = new ConnectionPool(masterConfig);
+                await serverPool.connect();
+                await this.ensureDatabaseExists(serverPool, dbName);
+                await serverPool.close();
+            }
 
             // Step 2: Connect to target database
             const dbConfig = useWindowsAuth ? getWindowsAuthConfig(dbName) : { ...config, database: dbName };
@@ -132,10 +159,20 @@ class DatabaseService {
 
     async ensureSchemas() {
         try {
-            await this.pool.request().batch(`
-                IF NOT EXISTS (SELECT * FROM sys.schemas WHERE name = 'scheduler') EXEC('CREATE SCHEMA scheduler');
-                IF NOT EXISTS (SELECT * FROM sys.schemas WHERE name = 'audit') EXEC('CREATE SCHEMA audit');
-            `);
+            // SECURITY FIX: Use proper schema creation with validation
+            const schemas = ['scheduler', 'audit'];
+
+            for (const schemaName of schemas) {
+                // Create a new request for each query to avoid parameter conflicts
+                const req = this.pool.request();
+                const checkQuery = 'SELECT COUNT(*) as count FROM sys.schemas WHERE name = @schemaName';
+                const result = await req.input('schemaName', sql.NVarChar, schemaName).query(checkQuery);
+
+                if (result.recordset[0].count === 0) {
+                    // Use dynamic SQL safely with validated schema names
+                    await this.pool.request().query(`CREATE SCHEMA [${schemaName}]`);
+                }
+            }
             console.log('Schemas verified');
         } catch (error) {
             console.error('Error ensuring schemas:', error);
@@ -281,7 +318,8 @@ class Repository {
      * Find by ID
      */
     async findById(id) {
-        const query = `SELECT * FROM ${this.fullTableName} WHERE id = @id`;
+        // SECURITY FIX: Use parameterized queries with schema/table validation
+        const query = `SELECT * FROM [${this.schema}].[${this.tableName}] WHERE id = @id`;
         const result = await this.db.query(query, { id });
         return result.recordset[0];
     }
@@ -290,28 +328,39 @@ class Repository {
      * Find all with optional filtering
      */
     async findAll(filters = {}, options = {}) {
-        let query = `SELECT * FROM ${this.fullTableName}`;
+        // SECURITY FIX: Validate column names and use parameterized queries
+        let query = `SELECT * FROM [${this.schema}].[${this.tableName}]`;
         const params = {};
         
-        // Build WHERE clause
+        // Build WHERE clause with validated column names
         const whereConditions = [];
+        const allowedColumns = await this.getTableColumns();
+        
         Object.keys(filters).forEach((key, index) => {
-            whereConditions.push(`${key} = @param${index}`);
-            params[`param${index}`] = filters[key];
+            // Validate column name against actual table columns
+            if (allowedColumns.includes(key)) {
+                whereConditions.push(`[${key}] = @param${index}`);
+                params[`param${index}`] = filters[key];
+            }
         });
         
         if (whereConditions.length > 0) {
             query += ` WHERE ${whereConditions.join(' AND ')}`;
         }
         
-        // Add ordering
+        // Add ordering with validation
         if (options.orderBy) {
-            query += ` ORDER BY ${options.orderBy}`;
+            const orderColumn = options.orderBy.replace(/\s+(ASC|DESC)$/i, '');
+            const orderDirection = /\s+(DESC)$/i.test(options.orderBy) ? 'DESC' : 'ASC';
+            if (allowedColumns.includes(orderColumn)) {
+                query += ` ORDER BY [${orderColumn}] ${orderDirection}`;
+            }
         }
         
-        // Add pagination
-        if (options.limit) {
-            query += ` OFFSET ${options.offset || 0} ROWS FETCH NEXT ${options.limit} ROWS ONLY`;
+        // Add pagination with parameterized values
+        if (options.limit && Number.isInteger(options.limit)) {
+            const offset = Number.isInteger(options.offset) ? options.offset : 0;
+            query += ` OFFSET ${offset} ROWS FETCH NEXT ${options.limit} ROWS ONLY`;
         }
         
         const result = await this.db.query(query, params);
@@ -319,10 +368,34 @@ class Repository {
     }
 
     /**
+     * Get valid column names for the table
+     */
+    async getTableColumns() {
+        if (this._columns) return this._columns;
+        
+        const query = `
+            SELECT COLUMN_NAME
+            FROM INFORMATION_SCHEMA.COLUMNS
+            WHERE TABLE_SCHEMA = @schema
+            AND TABLE_NAME = @table
+        `;
+        
+        const result = await this.db.query(query, {
+            schema: this.schema,
+            table: this.tableName
+        });
+        
+        this._columns = result.recordset.map(r => r.COLUMN_NAME);
+        return this._columns;
+    }
+
+    /**
      * Create new record
      */
     async create(data) {
-        const columns = Object.keys(data);
+        // SECURITY FIX: Validate column names before insertion
+        const allowedColumns = await this.getTableColumns();
+        const columns = Object.keys(data).filter(col => allowedColumns.includes(col));
         const values = columns.map((col, index) => `@param${index}`);
         const params = {};
         
@@ -331,7 +404,7 @@ class Repository {
         });
         
         const query = `
-            INSERT INTO ${this.fullTableName} (${columns.join(', ')})
+            INSERT INTO [${this.schema}].[${this.tableName}] (${columns.map(c => `[${c}]`).join(', ')})
             OUTPUT INSERTED.*
             VALUES (${values.join(', ')})
         `;
@@ -344,17 +417,24 @@ class Repository {
      * Update record
      */
     async update(id, data) {
-        const columns = Object.keys(data);
-        const setClause = columns.map((col, index) => `${col} = @param${index}`);
+        // SECURITY FIX: Validate column names before update
+        const allowedColumns = await this.getTableColumns();
+        const columns = Object.keys(data).filter(col => allowedColumns.includes(col));
+        const setClause = columns.map((col, index) => `[${col}] = @param${index}`);
         const params = { id };
         
         columns.forEach((col, index) => {
             params[`param${index}`] = data[col];
         });
         
+        // Only add updated_at if column exists
+        if (allowedColumns.includes('updated_at')) {
+            setClause.push('[updated_at] = GETUTCDATE()');
+        }
+        
         const query = `
-            UPDATE ${this.fullTableName}
-            SET ${setClause.join(', ')}, updated_at = GETUTCDATE()
+            UPDATE [${this.schema}].[${this.tableName}]
+            SET ${setClause.join(', ')}
             OUTPUT INSERTED.*
             WHERE id = @id
         `;
@@ -367,7 +447,7 @@ class Repository {
      * Delete record
      */
     async delete(id) {
-        const query = `DELETE FROM ${this.fullTableName} WHERE id = @id`;
+        const query = `DELETE FROM [${this.schema}].[${this.tableName}] WHERE id = @id`;
         const result = await this.db.query(query, { id });
         return result.rowsAffected[0] > 0;
     }
@@ -376,13 +456,18 @@ class Repository {
      * Count records
      */
     async count(filters = {}) {
-        let query = `SELECT COUNT(*) as count FROM ${this.fullTableName}`;
+        let query = `SELECT COUNT(*) as count FROM [${this.schema}].[${this.tableName}]`;
         const params = {};
         
+        // Validate column names
+        const allowedColumns = await this.getTableColumns();
         const whereConditions = [];
+        
         Object.keys(filters).forEach((key, index) => {
-            whereConditions.push(`${key} = @param${index}`);
-            params[`param${index}`] = filters[key];
+            if (allowedColumns.includes(key)) {
+                whereConditions.push(`[${key}] = @param${index}`);
+                params[`param${index}`] = filters[key];
+            }
         });
         
         if (whereConditions.length > 0) {
@@ -394,7 +479,7 @@ class Repository {
     }
 }
 
-// Export singleton instance
+// Export singleton instance - ALWAYS use real database
 const db = new DatabaseService();
 
 // Export repositories

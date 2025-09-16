@@ -1,3 +1,8 @@
+// ⚠️ CRITICAL WARNING: NEVER ADD DEMO MODE TO THIS APPLICATION
+// The client has explicitly forbidden ANY form of demo, mock, or test mode.
+// This application REQUIRES a live database connection to function.
+// DO NOT add any demo mode, mock data, or bypass mechanisms.
+
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -13,8 +18,7 @@ import {
   Tooltip,
   Badge,
   useTheme,
-  useMediaQuery,
-  Button
+  useMediaQuery
 } from '@mui/material';
 import {
   Dashboard as DashboardIcon,
@@ -35,7 +39,7 @@ const Layout = ({ children, user, onLogout }) => {
   const isTablet = useMediaQuery(theme.breakpoints.down('lg'));
   const open = Boolean(anchorEl);
   const isGoogle = typeof window !== 'undefined' && !!localStorage.getItem('google_credential');
-  const [modeLabel, setModeLabel] = useState(null); // 'DEMO' | 'LIVE' | null
+  const [serverAdmin, setServerAdmin] = useState(false);
 
   const { initials, name, email, picture } = useMemo(() => {
     const name = user?.name || '';
@@ -55,21 +59,16 @@ const Layout = ({ children, user, onLogout }) => {
   const handleClose = () => setAnchorEl(null);
   const go = (path) => { navigate(path); handleClose(); };
 
-  // Fetch mode for admins only
+  // Probe server admin capability to show Admin menu even if token lacks roles
   useEffect(() => {
-    let didCancel = false;
-    async function fetchMode() {
+    (async () => {
       try {
-        if (user?.role !== 'admin') return;
-        const res = await apiFetch('/api/admin/settings');
-        if (!res.ok) return;
-        const data = await res.json();
-        if (!didCancel) setModeLabel(data?.demo_mode ? 'DEMO' : 'LIVE');
+        const res = await apiFetch('/api/admin/status');
+        if (res.ok) setServerAdmin(true);
       } catch (_) { /* ignore */ }
-    }
-    fetchMode();
-    return () => { didCancel = true; };
-  }, [user]);
+    })();
+  }, []);
+
 
   return (
     <>
@@ -107,24 +106,6 @@ const Layout = ({ children, user, onLogout }) => {
                 }}
               >
                 ADMIN
-              </Box>
-            )}
-            {user?.role === 'admin' && modeLabel && (
-              <Box
-                component="span"
-                sx={{
-                  ml: 1,
-                  backgroundColor: modeLabel === 'DEMO' ? '#ef4444' : '#10b981',
-                  color: '#fff',
-                  px: 1,
-                  py: 0.5,
-                  borderRadius: 1,
-                  fontSize: '0.75rem',
-                  fontWeight: 600,
-                  display: 'inline-block'
-                }}
-              >
-                {modeLabel}
               </Box>
             )}
           </Typography>
@@ -189,7 +170,7 @@ const Layout = ({ children, user, onLogout }) => {
           </Tooltip>
           <Menu id="user-menu" anchorEl={anchorEl} open={open} onClose={handleClose} transformOrigin={{ horizontal: 'right', vertical: 'top' }} anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}>
             <MenuItem disabled>{name || email || 'User'}</MenuItem>
-            {user?.role === 'admin' && (
+            {(user?.role === 'admin' || serverAdmin) && (
               <MenuItem onClick={() => go('/admin')}>Admin</MenuItem>
             )}
             <MenuItem onClick={() => go('/profile')}>Profile</MenuItem>
@@ -226,7 +207,7 @@ const Layout = ({ children, user, onLogout }) => {
       {/* Mobile Navigation */}
       {isMobile && (
         <MobileNavigation
-          user={user}
+          user={{ ...user, serverAdmin }}
           onLogout={onLogout}
           notificationCount={0}
         />

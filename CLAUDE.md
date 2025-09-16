@@ -1,6 +1,21 @@
+// ⚠️ CRITICAL WARNING: NEVER ADD DEMO MODE TO THIS APPLICATION
+// The client has explicitly forbidden ANY form of demo, mock, or test mode.
+// This application REQUIRES a live database connection to function.
+// DO NOT add any demo mode, mock data, or bypass mechanisms.
+
 # CLAUDE.md
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+## ⚠️⚠️⚠️ CRITICAL: ABSOLUTE NO-PORT RULE ⚠️⚠️⚠️
+
+### 🚫 NEVER USE PORTS IN URLs - EVER! 🚫
+
+**THIS IS A PERMANENT, NON-NEGOTIABLE RULE FOR ALL PROJECTS**
+
+- ❌ NEVER: http://localhost:3001, http://localhost:3000, ANY_URL:ANY_PORT
+- ✅ ALWAYS: http://localhost, http://localhost/scheduler, /api/endpoint
+- **See NO-PORT-ABSOLUTE-RULE.md for complete details**
 
 ## Project Overview
 HIPAA-compliant hospital shift scheduling system with FCFS (First-Come, First-Served) distribution using 15-minute response windows. Deployed on Windows/IIS with SQL Server Express backend.
@@ -114,7 +129,10 @@ VAPID_PUBLIC_KEY=
 VAPID_PRIVATE_KEY=
 
 # CORS
-ALLOWED_ORIGINS=http://localhost:3000
+# ⚠️⚠️⚠️ CRITICAL: ABSOLUTE NO-PORT RULE ⚠️⚠️⚠️
+# NEVER USE PORTS IN URLS - NOT HERE, NOT ANYWHERE, EVER!
+# See NO-PORT-ABSOLUTE-RULE.md for complete details
+ALLOWED_ORIGINS=http://localhost,http://localhost/scheduler
 ```
 
 ## HIPAA Compliance
@@ -512,128 +530,6 @@ const spacing = {
 6. **Computer Vision**: Badge scanning for quick clock-in
 7. **IoT Integration**: Smart badge location tracking for emergency response
 
-## 📝 Demo Accounts & Test Data
-
-### Test User Credentials
-
-The system includes comprehensive demo data with the following test accounts:
-
-| Role | Email | Password | Name | Access Level |
-|------|-------|----------|------|-------------|
-| **Admin** | admin@demo.hospital.com | Admin123! | Sarah Johnson | Full system access |
-| **Supervisor** | supervisor@demo.hospital.com | Super123! | Michael Chen | ED department management |
-| **Nurse 1** | nurse1@demo.hospital.com | Nurse123! | Emily Rodriguez | Night shift, ED |
-| **Nurse 2** | nurse2@demo.hospital.com | Nurse123! | James Wilson | Day shift, ICU |
-| **Tech 1** | tech1@demo.hospital.com | Tech123! | Lisa Martinez | Evening shift, X-Ray |
-| **Tech 2** | tech2@demo.hospital.com | Tech123! | David Kim | Rotating, CT |
-| **Part-Time** | parttime@demo.hospital.com | Part123! | Amanda Thompson | Weekends only |
-| **Float Pool** | float@demo.hospital.com | Float123! | Robert Davis | Any department |
-
-### Demo Data Features
-
-#### 📅 Comprehensive Schedule Data
-- **14 days** of pre-populated shifts with staff assignments
-- **Staff names displayed** on all shifts (previously missing)
-- **Multiple departments**: ED, ICU, OR, Lab, Pharmacy, etc.
-- **Shift differentials**: Night (15%), Evening (10%), Mid (5%)
-- **Weekend staffing** adjustments
-
-#### 📞 On-Call Schedules
-- **30-day** on-call rotation for critical departments
-- **Primary and backup** on-call assignments
-- **Contact information** for each on-call staff
-- **Department coverage**: ED, ICU, OR, Lab, Pharmacy
-
-#### 🏖️ Vacation & PTO Tracking
-- **Christmas vacation**: Emily Rodriguez (12/23-12/27)
-- **Thanksgiving**: James Wilson (11/28-11/29)
-- **New Year**: Robert Davis (12/31-1/2)
-- **Personal time**: Lisa Martinez (11/15-11/17)
-- **Automatic exclusion** from shift assignments during PTO
-
-#### 😴 Fatigue Management Data
-- **Real-time fatigue scores** for all clinical staff
-- **Consecutive hours** tracking
-- **Weekly/monthly** hour accumulation
-- **Risk levels**: High (>16hr), Medium (12-16hr), Low (<12hr)
-- **Break tracking**: Time since last break
-
-#### 🔄 Shift Swap Requests
-- **Pending swaps** between staff members
-- **Approval workflow** with supervisor oversight
-- **Reason tracking** for audit purposes
-
-#### 🎨 Skills Matrix
-- **Specialized certifications**: ECMO, Trauma, CCRN
-- **Cross-training** documentation
-- **Department float** capabilities
-- **Preceptor** qualifications
-
-### 🔧 Using Demo Data
-
-#### Enable Demo Mode
-```javascript
-// In server.js or .env file
-process.env.DEMO_MODE = 'true';
-process.env.SKIP_EXTERNALS = 'true'; // Skip Auth0/Redis
-```
-
-#### Load Enhanced Demo Data
-```javascript
-// Use the enhanced demo data generator
-const demoData = require('./demo-data-enhanced');
-
-// Initialize all demo data
-const data = await demoData.initializeDemoData();
-
-// Access specific features
-const onCall = demoData.getOnCallStaff('2024-11-10', 'ED');
-const isOnVacation = demoData.isUserOnVacation('demo-nurse-001', '2024-12-25');
-```
-
-#### Demo API Endpoints
-When in demo mode, the following endpoints return rich test data:
-- `GET /api/shifts` - Returns shifts with assigned staff names
-- `GET /api/oncall/:date` - Returns on-call schedule for date
-- `GET /api/staff/vacations` - Returns vacation schedules
-- `GET /api/staff/fatigue` - Returns fatigue metrics
-- `GET /api/swaps` - Returns shift swap requests
-
-### 🔍 Critical Issues Found
-
-1. **Missing Staff Names**: Schedule view wasn't showing assigned staff names - **NOW FIXED**
-2. **No On-Call Display**: On-call schedules exist but no UI component
-3. **Vacation Conflicts**: No validation preventing shift assignment during PTO
-4. **Fatigue Alerts**: Data exists but no notification system
-5. **Swap Request UI**: Backend ready but frontend missing
-
-### 🚀 Quick Demo Setup
-
-```bash
-# 1. Install dependencies
-npm install
-
-# 2. Set demo environment
-export DEMO_MODE=true
-export SKIP_EXTERNALS=true
-
-# 3. Start with demo data
-npm run demo
-
-# 4. Login with any test account
-# Email: admin@demo.hospital.com
-# Password: Admin123!
-```
-
-### 📊 Demo Metrics
-
-- **8 test users** with different roles and permissions
-- **14 departments** with realistic staffing patterns
-- **200+ shifts** pre-populated over 2 weeks
-- **30-day** on-call schedule
-- **Fatigue tracking** for all clinical staff
-- **Vacation requests** with approval workflow
-- **Shift swaps** with pending/approved states
 
 ## ⚠️ CRITICAL ARCHITECTURAL ISSUES DISCOVERED
 

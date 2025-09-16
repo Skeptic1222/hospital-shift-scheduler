@@ -2,7 +2,7 @@ IIS Setup for http://localhost/scheduler
 
 Overview
 - Two deployment modes are supported:
-  1) Basic (no IIS URL Rewrite): simplest to run, hash-based routes (no deep-link refresh). API is called directly at http://localhost:3001.
+  1) Basic (no IIS URL Rewrite): simplest to run, hash-based routes (no deep-link refresh). API is called via your Node backend (configure reverse proxy as needed).
   2) Enhanced (URL Rewrite + ARR optional): pretty URLs (deep-link refresh works) and optional reverse-proxy for /api and /socket.io to Node.
 
 Prerequisites
@@ -15,7 +15,7 @@ Basic Mode (no URL Rewrite)
 2) Ensure `web.config` (in this repo) is the minimal version (no <rewrite> sections). This serves `build/index.html` as the default document.
 3) Browse to http://localhost/scheduler
    - App uses hash-based routing (/#/dashboard, etc.), so refresh and deep links work without URL Rewrite.
-   - API calls go directly to http://localhost:3001 (set by a small script in public/index.html).
+   - API calls go to /scheduler/api (proxied by IIS to your Node backend).
 4) Start the API (optional): `scripts\start-api.ps1 -Port 3001 -SkipExternals`
 
 Enhanced Mode (URL Rewrite + optional ARR)

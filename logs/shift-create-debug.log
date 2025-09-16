@@ -1,0 +1,7 @@
+{"ts":"2025-09-14T05:32:25.485Z","evt":"create_shift_received","user":"test@example.com","userId":"123","dbConnected":true}
+{"ts":"2025-09-14T05:32:25.489Z","evt":"schema_check_failed","user":"test@example.com","userId":"123","dbConnected":true,"error":"Cannot read properties of undefined (reading 'recordset')"}
+{"ts":"2025-09-14T07:23:03.170Z","evt":"create_shift_received","user":"test@example.com","userId":"123","dbConnected":true}
+{"ts":"2025-09-14T07:23:03.172Z","evt":"schema_missing","user":"test@example.com","userId":"123","dbConnected":true}
+{"ts":"2025-09-14T07:34:24.972Z","evt":"create_shift_received","user":"test@example.com","userId":"123","dbConnected":true}
+{"ts":"2025-09-14T07:34:24.977Z","evt":"schema_missing","user":"test@example.com","userId":"123","dbConnected":true}
+{"ts":"2025-09-14T07:35:57.524Z","evt":"create_shift_received","user":"test@example.com","userId":"123","dbConnected":true}

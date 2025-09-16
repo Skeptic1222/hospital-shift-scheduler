@@ -1,0 +1,15 @@
+{
+    "keep": {
+        "days": true,
+        "amount": 7
+    },
+    "auditLog": "C:\\inetpub\\wwwroot\\scheduler\\logs\\.edcbe1737bdb7a05de089bebc090b550eaa4013a-audit.json",
+    "files": [
+        {
+            "date": 1757829974788,
+            "name": "C:\\inetpub\\wwwroot\\scheduler\\logs\\performance-2025-09-13.log",
+            "hash": "64d805f0dad8928ebc8c3590b7e51c517681aecefe72890db7f8fe956bf1e49e"
+        }
+    ],
+    "hashType": "sha256"
+}

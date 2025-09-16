@@ -1,4 +1,9 @@
-﻿import { useEffect, useState } from 'react';
+// ⚠️ CRITICAL WARNING: NEVER ADD DEMO MODE TO THIS APPLICATION
+// The client has explicitly forbidden ANY form of demo, mock, or test mode.
+// This application REQUIRES a live database connection to function.
+// DO NOT add any demo mode, mock data, or bypass mechanisms.
+
+import { useEffect, useState } from 'react';
 import { Box, Typography } from '@mui/material';
 import StandardButton from '../components/common/StandardButton';
 
@@ -66,24 +71,6 @@ const Login = () => {
     } catch (e) { void e; }
   };
 
-  const handleDemoLogin = (email, name, role = 'user') => {
-    // Create a demo JWT token
-    const header = btoa(JSON.stringify({ alg: 'HS256', typ: 'JWT' }));
-    const payload = btoa(JSON.stringify({
-      sub: `demo-${Date.now()}`,
-      name: name,
-      email: email,
-      picture: 'https://ui-avatars.com/api/?name=' + encodeURIComponent(name),
-      roles: [role],
-      iat: Math.floor(Date.now() / 1000),
-      exp: Math.floor(Date.now() / 1000) + 86400 // 24 hours
-    }));
-    const signature = btoa('demo-signature');
-    const token = `${header}.${payload}.${signature}`;
-    
-    localStorage.setItem('google_credential', token);
-    window.location.reload();
-  };
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mt: 8 }}>
@@ -104,39 +91,6 @@ const Login = () => {
       {!clientId && (
         <Typography sx={{ mt: 2 }} color="warning.main">Set REACT_APP_GOOGLE_CLIENT_ID and rebuild</Typography>
       )}
-      
-      {/* Demo Login Options */}
-      <Box sx={{ mt: 4, p: 2, border: '1px solid #e0e0e0', borderRadius: 2, width: '100%', maxWidth: 400 }}>
-        <Typography variant="subtitle2" sx={{ mb: 2, textAlign: 'center', color: 'text.secondary' }}>
-          Demo Accounts (No Google Required)
-        </Typography>
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-          <StandardButton 
-            variant="outlined" 
-            size="medium"
-            fullWidth
-            onClick={() => handleDemoLogin('admin@demo.hospital.com', 'Sarah Johnson', 'admin')}
-          >
-            Login as Admin
-          </StandardButton>
-          <StandardButton 
-            variant="outlined" 
-            size="medium"
-            fullWidth
-            onClick={() => handleDemoLogin('nurse1@demo.hospital.com', 'Emily Rodriguez', 'user')}
-          >
-            Login as Nurse
-          </StandardButton>
-          <StandardButton 
-            variant="outlined" 
-            size="medium"
-            fullWidth
-            onClick={() => handleDemoLogin('supervisor@demo.hospital.com', 'Michael Chen', 'supervisor')}
-          >
-            Login as Supervisor
-          </StandardButton>
-        </Box>
-      </Box>
     </Box>
   );
 };

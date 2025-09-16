@@ -1,6 +1,6 @@
 const express = require('express');
 
-module.exports = function createUsersRouter({ googleAuth, repositories, db, cacheService, demo, isDemo }) {
+module.exports = function createUsersRouter({ googleAuth, repositories, db, cacheService }) {
   const router = express.Router();
 
   // Get current user's profile with minimal stats
@@ -9,20 +9,7 @@ module.exports = function createUsersRouter({ googleAuth, repositories, db, cach
       const email = req.user.email;
       if (!email) return res.status(400).json({ error: 'Missing user email' });
 
-      if ((isDemo && isDemo()) || !db.connected) {
-        // Demo profile from demo data
-        try { demo.ensureSeeded(); } catch (_) {}
-        const staff = (demo.listStaff && demo.listStaff()) || [];
-        const found = staff.find(s => (s.email || '').toLowerCase() === email.toLowerCase());
-        return res.json({
-          id: found?.id || req.user.sub || email,
-          name: found?.name || req.user.name || email,
-          email,
-          role: req.user.role || 'user',
-          department: found?.department_name || '',
-          stats: { hours_this_week: 0, fatigue_score: 0, consecutive_days_worked: 0 }
-        });
-      }
+      if (!db.connected) return res.status(503).json({ error: 'Database unavailable' });
 
       // Live DB path: find by email
       const users = await repositories.users.findAll({ email });
@@ -69,4 +56,3 @@ module.exports = function createUsersRouter({ googleAuth, repositories, db, cach
 
   return router;
 };
-

@@ -99,7 +99,9 @@ const Settings = () => {
       const ct = (res.headers && res.headers.get && res.headers.get('content-type')) || '';
       if (!ct.includes('application/json')) {
         // Attempt to read text for diagnostics
-        try { console.warn('Unexpected content-type for /api/settings:', ct, await res.text()); } catch (_) {}
+        try { console.warn('Unexpected content-type for /api/settings:', ct, await res.text()); } catch (_) {
+          // Ignore logging errors
+        }
         throw new Error('Invalid settings response');
       }
       const data = await res.json();
@@ -111,7 +113,9 @@ const Settings = () => {
       }));
     } catch (err) {
       setError('Failed to load settings');
-      try { console.error('Settings load error:', err?.message || err); } catch (_) {}
+      try { console.error('Settings load error:', err?.message || err); } catch (_) {
+        // Ignore logging errors
+      }
     } finally {
       setLoading(false);
     }

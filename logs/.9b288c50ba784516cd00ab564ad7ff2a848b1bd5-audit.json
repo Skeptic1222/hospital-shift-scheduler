@@ -1,0 +1,475 @@
+{
+    "keep": {
+        "days": true,
+        "amount": 30
+    },
+    "auditLog": "/mnt/c/inetpub/wwwroot/scheduler/logs/.9b288c50ba784516cd00ab564ad7ff2a848b1bd5-audit.json",
+    "files": [
+        {
+            "date": 1757665820819,
+            "name": "/mnt/c/inetpub/wwwroot/scheduler/logs/app-2025-09-12.log",
+            "hash": "a9ce4e2282fe287378612ffc231945e1aaed62ea8b7a90250354f55d9baac418"
+        },
+        {
+            "date": 1757800499519,
+            "name": "/mnt/c/inetpub/wwwroot/scheduler/logs/app-2025-09-13.log",
+            "hash": "ab48983e855c309a613e8532f374bc76d36dd197ae73341ebd54e6eb0f4ab6bb"
+        },
+        {
+            "date": 1757834582597,
+            "name": "/mnt/c/inetpub/wwwroot/scheduler/logs/app-2025-09-14.log.118",
+            "hash": "a42228c9b5f0b60799e18b8759a7a5a388783c28143e152ca1142587aabf2429"
+        },
+        {
+            "date": 1757975073100,
+            "name": "/mnt/c/inetpub/wwwroot/scheduler/logs/app-2025-09-15.log",
+            "hash": "80cab9db23f2341b1c2a866fcfa98331764528c5be2293685b85dd4c5026ec9e"
+        },
+        {
+            "date": 1757975076273,
+            "name": "/mnt/c/inetpub/wwwroot/scheduler/logs/app-2025-09-15.log.1",
+            "hash": "43a00dc0c2fdded2259611d4f75ad850207c9a53e4024cc16b1b8d42243ca069"
+        },
+        {
+            "date": 1757975079232,
+            "name": "/mnt/c/inetpub/wwwroot/scheduler/logs/app-2025-09-15.log.2",
+            "hash": "7eb25bda027368e67deba978f0af1002d7e4dd30d3bb0809fab0b62d64f52e34"
+        },
+        {
+            "date": 1757975082248,
+            "name": "/mnt/c/inetpub/wwwroot/scheduler/logs/app-2025-09-15.log.3",
+            "hash": "24d4b409d6826025f0eb94832fabfdee65fd51acfa61f917fc388a4c1b1f1d35"
+        },
+        {
+            "date": 1757975086813,
+            "name": "/mnt/c/inetpub/wwwroot/scheduler/logs/app-2025-09-15.log.4",
+            "hash": "1acc807c62b14dea3ef7e1eba25ae0ea396bb425f6fd0d3de42ccb3ac48bde6e"
+        },
+        {
+            "date": 1757975089902,
+            "name": "/mnt/c/inetpub/wwwroot/scheduler/logs/app-2025-09-15.log.5",
+            "hash": "0d5dba528314602c60bfca049f41d852e6380ccb8a409c58e000d3e46edcf919"
+        },
+        {
+            "date": 1757975092848,
+            "name": "/mnt/c/inetpub/wwwroot/scheduler/logs/app-2025-09-15.log.6",
+            "hash": "907589683731300f000bee9240318c5744fdae522ef52df255a7bc133421f864"
+        },
+        {
+            "date": 1757975095884,
+            "name": "/mnt/c/inetpub/wwwroot/scheduler/logs/app-2025-09-15.log.7",
+            "hash": "2fc0a85c7f2586303b58858ada2f9c49a5306a0a768d02da9e76b6121e767e79"
+        },
+        {
+            "date": 1757975098974,
+            "name": "/mnt/c/inetpub/wwwroot/scheduler/logs/app-2025-09-15.log.8",
+            "hash": "fe18c45278523fbf94ca161ad974351cf3dd2d242dc3c54084a869b969d363fb"
+        },
+        {
+            "date": 1757975102322,
+            "name": "/mnt/c/inetpub/wwwroot/scheduler/logs/app-2025-09-15.log.9",
+            "hash": "ee5d9271392503b1c97a31c0b6564cb47b47d1d7efac0c0d6119c3c778c2a7ef"
+        },
+        {
+            "date": 1757975105526,
+            "name": "/mnt/c/inetpub/wwwroot/scheduler/logs/app-2025-09-15.log.10",
+            "hash": "8cc7c3750ee239f48e57531fba557bb37aaf4ccfd90685229580636a9af16bd8"
+        },
+        {
+            "date": 1757975108792,
+            "name": "/mnt/c/inetpub/wwwroot/scheduler/logs/app-2025-09-15.log.11",
+            "hash": "c15b3a9f7b807ff371b193fc308e26985dfe9c70780abe65629a545ad7f95cf4"
+        },
+        {
+            "date": 1757975112242,
+            "name": "/mnt/c/inetpub/wwwroot/scheduler/logs/app-2025-09-15.log.12",
+            "hash": "5b371841ac24174375206bb6ec6054fef864413a2da75e0c282f121cd4594629"
+        },
+        {
+            "date": 1757975118023,
+            "name": "/mnt/c/inetpub/wwwroot/scheduler/logs/app-2025-09-15.log.13",
+            "hash": "86f0bf481b1ade40728f4cbbcf383c364e7e0f1a3bf6891bdc30796db6ec976a"
+        },
+        {
+            "date": 1757975122267,
+            "name": "/mnt/c/inetpub/wwwroot/scheduler/logs/app-2025-09-15.log.14",
+            "hash": "b7b4c4a2ce265aea54eac840cbd606a7e78577284b36af9191ee6e12224c1db4"
+        },
+        {
+            "date": 1757975126327,
+            "name": "/mnt/c/inetpub/wwwroot/scheduler/logs/app-2025-09-15.log.15",
+            "hash": "1e39688e93ab8187374dbf3ed37aad56782b00f00fb6eafa95560d47ef0e2fe3"
+        },
+        {
+            "date": 1757975131838,
+            "name": "/mnt/c/inetpub/wwwroot/scheduler/logs/app-2025-09-15.log.16",
+            "hash": "15d065d1fe7556c2a1457ecb8fa6e8599d8075581fef23cecf26d9f50f20ba8b"
+        },
+        {
+            "date": 1757975136316,
+            "name": "/mnt/c/inetpub/wwwroot/scheduler/logs/app-2025-09-15.log.17",
+            "hash": "8d5de343eb580bd554b50e32e0c24a1578043cc69766d3ac347c5d5a56af9ebe"
+        },
+        {
+            "date": 1757975140265,
+            "name": "/mnt/c/inetpub/wwwroot/scheduler/logs/app-2025-09-15.log.18",
+            "hash": "812966fbf93c98afd26b6fa685f95114c1b3e0c7de487426b8b1d7e213dc7aa6"
+        },
+        {
+            "date": 1757975143993,
+            "name": "/mnt/c/inetpub/wwwroot/scheduler/logs/app-2025-09-15.log.19",
+            "hash": "a0ffedb980e246198b6c932a8fb95defab298019755f7051fdb654065056b0f1"
+        },
+        {
+            "date": 1757975147555,
+            "name": "/mnt/c/inetpub/wwwroot/scheduler/logs/app-2025-09-15.log.20",
+            "hash": "636e122eabe3630ba099b346d40aaa45d331a0aaed054aca70866e3fcc05e524"
+        },
+        {
+            "date": 1757975152702,
+            "name": "/mnt/c/inetpub/wwwroot/scheduler/logs/app-2025-09-15.log.21",
+            "hash": "798c5db1309b86161a20f748316e37cd630011c5b8a2c601fee8a81f3803a297"
+        },
+        {
+            "date": 1757975156248,
+            "name": "/mnt/c/inetpub/wwwroot/scheduler/logs/app-2025-09-15.log.22",
+            "hash": "b1a5ed2a67e82b709457995d5ef525b271f8af415f428117af58004378519672"
+        },
+        {
+            "date": 1757975159752,
+            "name": "/mnt/c/inetpub/wwwroot/scheduler/logs/app-2025-09-15.log.23",
+            "hash": "815ccd86a1f23e274bd0e7426a3a0c8d1fb655eab412aa3dab1b3cb0e931f70a"
+        },
+        {
+            "date": 1757975163325,
+            "name": "/mnt/c/inetpub/wwwroot/scheduler/logs/app-2025-09-15.log.24",
+            "hash": "8dc1e83e050a380a1b54060c94126cbc03094d765febee083d0001e2f55898e8"
+        },
+        {
+            "date": 1757975167019,
+            "name": "/mnt/c/inetpub/wwwroot/scheduler/logs/app-2025-09-15.log.25",
+            "hash": "5a39340d25280736fb0f2ffa6a970dcb7a8cfa50c3b63b4b3aae70adbf24af94"
+        },
+        {
+            "date": 1757975170836,
+            "name": "/mnt/c/inetpub/wwwroot/scheduler/logs/app-2025-09-15.log.26",
+            "hash": "0b99b34524e4d503a1cd579cd3e83de8a0f17cea6790b68521abb1236dccf4a5"
+        },
+        {
+            "date": 1757975174613,
+            "name": "/mnt/c/inetpub/wwwroot/scheduler/logs/app-2025-09-15.log.27",
+            "hash": "a5c9c010d26215514dbb0837118914fa999020bede3d3b722a91f04d399e0e24"
+        },
+        {
+            "date": 1757975178528,
+            "name": "/mnt/c/inetpub/wwwroot/scheduler/logs/app-2025-09-15.log.28",
+            "hash": "228dba47926fc3d68e525cec33f846fa54662063d7ba09289dee26ed3ca23978"
+        },
+        {
+            "date": 1757975182431,
+            "name": "/mnt/c/inetpub/wwwroot/scheduler/logs/app-2025-09-15.log.29",
+            "hash": "e9bc34a8f3a9bb481317b97b4b29ff8b97ce7c8bf8da09835148de4fc8086f2c"
+        },
+        {
+            "date": 1757975187654,
+            "name": "/mnt/c/inetpub/wwwroot/scheduler/logs/app-2025-09-15.log.30",
+            "hash": "744b94025bd19d1646edce7168523e5afa8714170bb04df7a0400713c3f3457a"
+        },
+        {
+            "date": 1757975191382,
+            "name": "/mnt/c/inetpub/wwwroot/scheduler/logs/app-2025-09-15.log.31",
+            "hash": "e3083f034faa2f7ff3d3c870ad3e773eb12694785346ee8cccacc042309201d0"
+        },
+        {
+            "date": 1757975195917,
+            "name": "/mnt/c/inetpub/wwwroot/scheduler/logs/app-2025-09-15.log.32",
+            "hash": "f538f05f552874301ae52575fcf6c94b12aa856e435bc761070d7534e73943c9"
+        },
+        {
+            "date": 1757975200403,
+            "name": "/mnt/c/inetpub/wwwroot/scheduler/logs/app-2025-09-15.log.33",
+            "hash": "9a4e7073bc61abbb51868574c0e59ce035d19eec8ee367c1f99bcd09308214d7"
+        },
+        {
+            "date": 1757975204672,
+            "name": "/mnt/c/inetpub/wwwroot/scheduler/logs/app-2025-09-15.log.34",
+            "hash": "af9c27e3e66622d4844413fec106d893557a65f1c36e660cd480fc8431d1dfc3"
+        },
+        {
+            "date": 1757975209266,
+            "name": "/mnt/c/inetpub/wwwroot/scheduler/logs/app-2025-09-15.log.35",
+            "hash": "7176ef6d680b52e560fc093110e6a6052ea996f90900b558bfc3f39d97575037"
+        },
+        {
+            "date": 1757975213492,
+            "name": "/mnt/c/inetpub/wwwroot/scheduler/logs/app-2025-09-15.log.36",
+            "hash": "7ab4c41a44db30df513401a22799a0d2f6c3b878480754ccc728ed44770bb549"
+        },
+        {
+            "date": 1757975218445,
+            "name": "/mnt/c/inetpub/wwwroot/scheduler/logs/app-2025-09-15.log.37",
+            "hash": "9ead94394792afe3ebd243d34bebc0d50e36ee689b850189b7d508cfb7539cf6"
+        },
+        {
+            "date": 1757975222214,
+            "name": "/mnt/c/inetpub/wwwroot/scheduler/logs/app-2025-09-15.log.38",
+            "hash": "0a61794dc1986fed0d415564da9b6a96f16be98b932461d95290f097d74dbd92"
+        },
+        {
+            "date": 1757975225941,
+            "name": "/mnt/c/inetpub/wwwroot/scheduler/logs/app-2025-09-15.log.39",
+            "hash": "b4a32cc1a95b986be94b538bc1c3a455094a66200a6a8d542c0c2c0e7a4b4451"
+        },
+        {
+            "date": 1757975229799,
+            "name": "/mnt/c/inetpub/wwwroot/scheduler/logs/app-2025-09-15.log.40",
+            "hash": "78fa245527a2a5a26b3c3744f379767dc54db87d1aca235eb4563138b7005453"
+        },
+        {
+            "date": 1757975233820,
+            "name": "/mnt/c/inetpub/wwwroot/scheduler/logs/app-2025-09-15.log.41",
+            "hash": "494611e4d89f29ce48621f79ec8e82f313e531d99b55e7cc54bcd911bed36463"
+        },
+        {
+            "date": 1757975237697,
+            "name": "/mnt/c/inetpub/wwwroot/scheduler/logs/app-2025-09-15.log.42",
+            "hash": "a754c02c4c24cdd3a9e63d7856078aeb52c812af6e5e0ae177973aa797158efc"
+        },
+        {
+            "date": 1757975241725,
+            "name": "/mnt/c/inetpub/wwwroot/scheduler/logs/app-2025-09-15.log.43",
+            "hash": "2b904ea82d87eeecee5e2e2067c60823b13bbc3cb02fa62f20b2442e99d1ad88"
+        },
+        {
+            "date": 1757975245675,
+            "name": "/mnt/c/inetpub/wwwroot/scheduler/logs/app-2025-09-15.log.44",
+            "hash": "d7d7c23860ea51d8c5b4c79410583d5a71b5ed4eb0523020b23cd3320fb07906"
+        },
+        {
+            "date": 1757975249788,
+            "name": "/mnt/c/inetpub/wwwroot/scheduler/logs/app-2025-09-15.log.45",
+            "hash": "05ccb333b974d5491da76db3ec86d64ebb3c6d49d34973f91f57d8f115e56d10"
+        },
+        {
+            "date": 1757975255251,
+            "name": "/mnt/c/inetpub/wwwroot/scheduler/logs/app-2025-09-15.log.46",
+            "hash": "e51b127872bcdec38ccfa1a29a5f13601881b399baad51661066108f8d11301d"
+        },
+        {
+            "date": 1757975259470,
+            "name": "/mnt/c/inetpub/wwwroot/scheduler/logs/app-2025-09-15.log.47",
+            "hash": "6af039733e08fad6fc89ff366f8e9dac5df8738f3683ea1ba225df4ecc527fff"
+        },
+        {
+            "date": 1757975263728,
+            "name": "/mnt/c/inetpub/wwwroot/scheduler/logs/app-2025-09-15.log.48",
+            "hash": "a8c0695f1aea2deba6f6be5f9824aedce3b51912eaf474bf4c2966993a9eea88"
+        },
+        {
+            "date": 1757975267954,
+            "name": "/mnt/c/inetpub/wwwroot/scheduler/logs/app-2025-09-15.log.49",
+            "hash": "875853872c6c59642e80cbb99f9638abf42771ac2fab226cc2a3e200aa4a645d"
+        },
+        {
+            "date": 1757975272320,
+            "name": "/mnt/c/inetpub/wwwroot/scheduler/logs/app-2025-09-15.log.50",
+            "hash": "26b43122d83e06186a8847d102594737fc614d875f30198ada1daa333ed7f736"
+        },
+        {
+            "date": 1757975276665,
+            "name": "/mnt/c/inetpub/wwwroot/scheduler/logs/app-2025-09-15.log.51",
+            "hash": "76328ab875dbe8b6f2c439132558612e3cc9f37e373fde0c020a43d30ad63054"
+        },
+        {
+            "date": 1757975280871,
+            "name": "/mnt/c/inetpub/wwwroot/scheduler/logs/app-2025-09-15.log.52",
+            "hash": "1a7bc94616f86b7053f571039dfbd2d9d03ad30f828788795f339eab25fdf9bf"
+        },
+        {
+            "date": 1757975286897,
+            "name": "/mnt/c/inetpub/wwwroot/scheduler/logs/app-2025-09-15.log.53",
+            "hash": "930f9715fb80638561282d9f3b0ea32fb5f98f7d0252f420e8c682b5fb4f4d67"
+        },
+        {
+            "date": 1757975292074,
+            "name": "/mnt/c/inetpub/wwwroot/scheduler/logs/app-2025-09-15.log.54",
+            "hash": "de982adf6d7515f33bf940f9fe09612b4a83bcc378e80457adcf411c261b5614"
+        },
+        {
+            "date": 1757975297375,
+            "name": "/mnt/c/inetpub/wwwroot/scheduler/logs/app-2025-09-15.log.55",
+            "hash": "35dc91e5fb2c5fbbc2e95f725525c817650cea56c18e6c61279cb6a28e71ed07"
+        },
+        {
+            "date": 1757975302185,
+            "name": "/mnt/c/inetpub/wwwroot/scheduler/logs/app-2025-09-15.log.56",
+            "hash": "ab3e517ddb6ac60620651d67248ccd22b8836f1edd868cc72eefd988f0419bb6"
+        },
+        {
+            "date": 1757975306532,
+            "name": "/mnt/c/inetpub/wwwroot/scheduler/logs/app-2025-09-15.log.57",
+            "hash": "25977a177569fb5625bedbc779821ed9805421daae814a08658464993cfb8b9d"
+        },
+        {
+            "date": 1757975310803,
+            "name": "/mnt/c/inetpub/wwwroot/scheduler/logs/app-2025-09-15.log.58",
+            "hash": "01573ed886234fd9fe9b7aaa8f2be203c8145d1e6b98afc7747a17ad366d79bd"
+        },
+        {
+            "date": 1757975316627,
+            "name": "/mnt/c/inetpub/wwwroot/scheduler/logs/app-2025-09-15.log.59",
+            "hash": "e1dbbb2774262cc4b3d74e4ca11be1df5c877b4e2edbdcfdbc60d77d06144294"
+        },
+        {
+            "date": 1757975323052,
+            "name": "/mnt/c/inetpub/wwwroot/scheduler/logs/app-2025-09-15.log.60",
+            "hash": "b78f7197adc1fb8d7c3e63aab75a00d831081709e96c55069e73648d668ffd84"
+        },
+        {
+            "date": 1757975327654,
+            "name": "/mnt/c/inetpub/wwwroot/scheduler/logs/app-2025-09-15.log.61",
+            "hash": "40586e03dd0522487376b2045ad67b69d594c821eacbb7d5a1ee54158433a4da"
+        },
+        {
+            "date": 1757975332214,
+            "name": "/mnt/c/inetpub/wwwroot/scheduler/logs/app-2025-09-15.log.62",
+            "hash": "011c139de111f866ea54f0f0580f365213342893042db9d9b0058b29de3dcf4a"
+        },
+        {
+            "date": 1757975337011,
+            "name": "/mnt/c/inetpub/wwwroot/scheduler/logs/app-2025-09-15.log.63",
+            "hash": "d5986be2bb66032518c2c50b0000aaa59bc6bf11cfc7ef8ebf734341be1878bf"
+        },
+        {
+            "date": 1757975341801,
+            "name": "/mnt/c/inetpub/wwwroot/scheduler/logs/app-2025-09-15.log.64",
+            "hash": "69230e60b744f79e5ee05b8430a884645debf7a51845c33cf054ba0fb9ac0f85"
+        },
+        {
+            "date": 1757975346514,
+            "name": "/mnt/c/inetpub/wwwroot/scheduler/logs/app-2025-09-15.log.65",
+            "hash": "fa05289943a8f3fe5e2c54ef76596b9174a5271fd7bc4a9c5355b39f7b3cf1be"
+        },
+        {
+            "date": 1757975352496,
+            "name": "/mnt/c/inetpub/wwwroot/scheduler/logs/app-2025-09-15.log.66",
+            "hash": "1b9933d5b02f3535f6fb2fa3af8d8a9909b88c1cc7cf546c83881b79b774fa91"
+        },
+        {
+            "date": 1757975357164,
+            "name": "/mnt/c/inetpub/wwwroot/scheduler/logs/app-2025-09-15.log.67",
+            "hash": "b4fcbf481ca55e70c47c6f61ac72c1b42d3320c3371fadf563bb68cf963246b6"
+        },
+        {
+            "date": 1757975361890,
+            "name": "/mnt/c/inetpub/wwwroot/scheduler/logs/app-2025-09-15.log.68",
+            "hash": "c1b1d4b1afd784cebd1441e67283bc1da3ba9c487079d3d6ea36d0e47170d225"
+        },
+        {
+            "date": 1757975366804,
+            "name": "/mnt/c/inetpub/wwwroot/scheduler/logs/app-2025-09-15.log.69",
+            "hash": "346346757ede6e7546680077f2493b7e783997e63a5bed60e7517fec059030b1"
+        },
+        {
+            "date": 1757975371502,
+            "name": "/mnt/c/inetpub/wwwroot/scheduler/logs/app-2025-09-15.log.70",
+            "hash": "cbcd85c8498b1c802fe3543a3c06baa8310daa8011f36a3278f55bf9092acc3e"
+        },
+        {
+            "date": 1757975378986,
+            "name": "/mnt/c/inetpub/wwwroot/scheduler/logs/app-2025-09-15.log.71",
+            "hash": "4f40001c7b85bee51a958628e0f5c4aee8b6252d423a04615803200fc5fb42ef"
+        },
+        {
+            "date": 1757975399876,
+            "name": "/mnt/c/inetpub/wwwroot/scheduler/logs/app-2025-09-15.log.72",
+            "hash": "5e37bca5c0869bb3c033f1f4a411d4cf7e21c47fe452bbd40b4b70d0a150d618"
+        },
+        {
+            "date": 1757975406963,
+            "name": "/mnt/c/inetpub/wwwroot/scheduler/logs/app-2025-09-15.log.73",
+            "hash": "b2a75cbef9b08c997c0822de267a0263b53a6d61f81dcd83430cf1b8b71f35da"
+        },
+        {
+            "date": 1757975412936,
+            "name": "/mnt/c/inetpub/wwwroot/scheduler/logs/app-2025-09-15.log.74",
+            "hash": "d6139b575d0fc8fa471dc255b97b64d97095df1d5c07a4433158ac9e81e82ff0"
+        },
+        {
+            "date": 1757975420104,
+            "name": "/mnt/c/inetpub/wwwroot/scheduler/logs/app-2025-09-15.log.75",
+            "hash": "0c5089bbe47f534d7baebf39ff51ee6e99d9344f2c36a2ddceb7702e368ec407"
+        },
+        {
+            "date": 1757975426207,
+            "name": "/mnt/c/inetpub/wwwroot/scheduler/logs/app-2025-09-15.log.76",
+            "hash": "1d03f0dd8b26e3892328a2348d287780af0e7787fb16a658b2adec6b85ef28c4"
+        },
+        {
+            "date": 1757975432234,
+            "name": "/mnt/c/inetpub/wwwroot/scheduler/logs/app-2025-09-15.log.77",
+            "hash": "4902fa2b7be0c91a396022446155d4b78d6668cbe33bef1c97e856b8e134eb85"
+        },
+        {
+            "date": 1757975438070,
+            "name": "/mnt/c/inetpub/wwwroot/scheduler/logs/app-2025-09-15.log.78",
+            "hash": "81670a185a4c96a64919cd05b7a50b7da18380f6e404a6cceefd0c3a060abd57"
+        },
+        {
+            "date": 1757975444107,
+            "name": "/mnt/c/inetpub/wwwroot/scheduler/logs/app-2025-09-15.log.79",
+            "hash": "57459057aaf377d1aa202d3f38460ac6180486844f2bcdb932333c07d2d742c4"
+        },
+        {
+            "date": 1757975450152,
+            "name": "/mnt/c/inetpub/wwwroot/scheduler/logs/app-2025-09-15.log.80",
+            "hash": "d40e0679ad60c4d7f1432ca8ee482ee3e867e38ca8d7366a4df5af84e151f642"
+        },
+        {
+            "date": 1757975457231,
+            "name": "/mnt/c/inetpub/wwwroot/scheduler/logs/app-2025-09-15.log.81",
+            "hash": "fff6dceb1138140a45048867bd0c99ac97ded3690ebe1b9ff85cf595595db3a7"
+        },
+        {
+            "date": 1757975463359,
+            "name": "/mnt/c/inetpub/wwwroot/scheduler/logs/app-2025-09-15.log.82",
+            "hash": "ef396eab855fa45a76d02e903656af788d495f2fd8c00b3b811597c87df9467c"
+        },
+        {
+            "date": 1757975469251,
+            "name": "/mnt/c/inetpub/wwwroot/scheduler/logs/app-2025-09-15.log.83",
+            "hash": "3f1850c991c8fd91c076e131a480c85b0e81faf00ef1d97e3c79f52fede872b0"
+        },
+        {
+            "date": 1757975475976,
+            "name": "/mnt/c/inetpub/wwwroot/scheduler/logs/app-2025-09-15.log.84",
+            "hash": "eed1b079e25915f97bf14f3ee79756263eb48490b806fd6a6c9e89e2ef582a7d"
+        },
+        {
+            "date": 1757975484196,
+            "name": "/mnt/c/inetpub/wwwroot/scheduler/logs/app-2025-09-15.log.85",
+            "hash": "ef9df971091a5832656151f5e38c5fafd4062cea7d2bcac75fbc35a9ea589bb7"
+        },
+        {
+            "date": 1757975491449,
+            "name": "/mnt/c/inetpub/wwwroot/scheduler/logs/app-2025-09-15.log.86",
+            "hash": "b0e2fba2ce019df454e425a8325baa43b0ec8ac258794bb2500932483d910258"
+        },
+        {
+            "date": 1757975497220,
+            "name": "/mnt/c/inetpub/wwwroot/scheduler/logs/app-2025-09-15.log.87",
+            "hash": "380099e4c95db06af8a89689737977cffc5e03c42501a3ac0dfa013becd3314c"
+        },
+        {
+            "date": 1757975502737,
+            "name": "/mnt/c/inetpub/wwwroot/scheduler/logs/app-2025-09-15.log.88",
+            "hash": "1729873cd7daaa22ef36555cbf7c133004f7665f85228c6dba37ab4ea58cbc09"
+        },
+        {
+            "date": 1757975526381,
+            "name": "/mnt/c/inetpub/wwwroot/scheduler/logs/app-2025-09-15.log.89",
+            "hash": "bb85ff6d0a27729444827127ea956d5fa5ab6d698c09829a61e48f2bb21c5b8d"
+        }
+    ],
+    "hashType": "sha256"
+}

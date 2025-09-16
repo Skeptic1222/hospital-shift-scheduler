@@ -1,7 +1,7 @@
 ﻿IIS Reverse Proxy + Node API
 
 What this enables
-- Serve the SPA from /scheduler (IIS static) and proxy /api/* and /socket.io/* to Node on localhost:3001.
+- Serve the SPA from /scheduler (IIS static) and proxy /api/* and /socket.io/* to your Node backend.
 
 Install prerequisites (run as Administrator)
 1) URL Rewrite (required for SPA fallback + proxy):

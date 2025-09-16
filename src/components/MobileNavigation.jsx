@@ -62,7 +62,7 @@ const MobileNavigation = ({ user, onLogout, notificationCount = 0 }) => {
   ];
 
   // Add admin item if user is admin
-  if (user?.role === 'admin') {
+  if (user?.role === 'admin' || user?.serverAdmin) {
     drawerItems.push({ path: '/admin', label: 'Admin', icon: <AdminIcon /> });
   }
 

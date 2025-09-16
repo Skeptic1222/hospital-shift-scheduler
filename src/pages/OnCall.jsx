@@ -70,29 +70,14 @@ const OnCall = () => {
       const res = await apiFetch(`/api/oncall?view=${view}&date=${date}`);
       const data = await res.json();
 
-      // Use demo data if API returns empty
-      const demoAssignments = {};
-      DEPARTMENTS.forEach(dept => {
-        const deptStaff = staff.filter(s => s.department_code === dept.code);
-        if (deptStaff.length > 0) {
-          demoAssignments[dept.code] = {
-            userId: deptStaff[0].id,
-            userName: `${deptStaff[0].first_name} ${deptStaff[0].last_name}`,
-            phone: deptStaff[0].phone,
-            email: deptStaff[0].email,
-            isPrimary: true
-          };
-        }
-      });
-
-      setAssignments(data.assignments || demoAssignments);
+      setAssignments(data.assignments || {});
     } catch (err) {
       setError('Failed to load on-call assignments');
       setAssignments({});
     } finally {
       setLoading(false);
     }
-  }, [view, date, staff]);
+  }, [view, date]); // Removed 'staff' - not needed as dependency
 
   useEffect(() => {
     loadAssignments();
@@ -106,15 +91,7 @@ const OnCall = () => {
       setStaff(data.staff || []);
     } catch (err) {
       console.error('Failed to load staff:', err);
-      // Use demo data
-      setStaff([
-        { id: 1, first_name: 'Dr. Sarah', last_name: 'Johnson', department_code: 'ED', phone: '555-0101', email: 'sarah.j@hospital.com' },
-        { id: 2, first_name: 'Dr. Michael', last_name: 'Chen', department_code: 'ICU', phone: '555-0102', email: 'michael.c@hospital.com' },
-        { id: 3, first_name: 'Dr. Emily', last_name: 'Rodriguez', department_code: 'OR', phone: '555-0103', email: 'emily.r@hospital.com' },
-        { id: 4, first_name: 'Dr. James', last_name: 'Wilson', department_code: 'CathLab', phone: '555-0104', email: 'james.w@hospital.com' },
-        { id: 5, first_name: 'Tech Lisa', last_name: 'Martinez', department_code: 'CT', phone: '555-0105', email: 'lisa.m@hospital.com' },
-        { id: 6, first_name: 'Tech David', last_name: 'Kim', department_code: 'MR', phone: '555-0106', email: 'david.k@hospital.com' }
-      ]);
+      setStaff([]);
     }
   }
 

@@ -10,6 +10,9 @@ class RedisCacheService {
     constructor(config) {
         this.config = config;
         
+        // Always initialize Redis in this build
+        this.isDemo = false;
+        
         // Main Redis client
         this.client = new Redis({
             host: config.redis.host,
@@ -151,6 +154,8 @@ class RedisCacheService {
      * Set cache with encryption for sensitive data
      */
     async set(pattern, params, data, options = {}) {
+        
+        
         const key = this.generateKey(pattern, params);
         const ttl = options.ttl || this.ttl[pattern] || this.ttl.default;
         const sensitive = options.sensitive || false;
@@ -177,6 +182,8 @@ class RedisCacheService {
      * Get cache with decryption for sensitive data
      */
     async get(pattern, params, options = {}) {
+        
+        
         const key = this.generateKey(pattern, params);
         const sensitive = options.sensitive || false;
         
@@ -200,6 +207,8 @@ class RedisCacheService {
      * Delete cache entry
      */
     async del(pattern, params) {
+        
+        
         const key = this.generateKey(pattern, params);
         
         try {

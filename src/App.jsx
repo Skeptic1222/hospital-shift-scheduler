@@ -1,3 +1,8 @@
+// ⚠️ CRITICAL WARNING: NEVER ADD DEMO MODE TO THIS APPLICATION
+// The client has explicitly forbidden ANY form of demo, mock, or test mode.
+// This application REQUIRES a live database connection to function.
+// DO NOT add any demo mode, mock data, or bypass mechanisms.
+
 // Build timestamp: 2025-09-06 10:45 - UI fixes applied with cache bust
 import { useEffect, useState } from 'react';
 import { BrowserRouter as BrowserRouter, HashRouter as HashRouter, Routes, Route, Navigate } from 'react-router-dom';
@@ -9,6 +14,9 @@ import { Provider } from 'react-redux';
 import { store } from './store';
 // Auth0 removed: Google OAuth only
 import io from 'socket.io-client';
+
+// Import error logger to capture browser errors
+import './utils/errorLogger';
 
 // Components
 import Layout from './components/Layout';
@@ -170,27 +178,17 @@ function App() {
       const initSocket = async () => {
         try {
           const token = localStorage.getItem('google_credential') || '';
-          // Absolute public base preferred (same as API base). Example:
-          // REACT_APP_PUBLIC_BASE=http://localhost/scheduler or http://PUBLIC_IP/scheduler
-          const publicBase = process.env.REACT_APP_PUBLIC_BASE || (typeof window !== 'undefined' && window.__PUBLIC_BASE__);
-          let socketUrl = '';
-          let socketPath = '/scheduler/socket.io';
-          if (publicBase) {
-            try {
-              const u = new URL(publicBase);
-              socketUrl = `${u.protocol}//${u.host}`;
-              // Ensure scheduler prefix
-              socketPath = `${u.pathname.replace(/\/$/, '')}/socket.io`;
-            } catch (_) {
-              // Fallback to same-origin
-              socketUrl = '';
-              socketPath = '/scheduler/socket.io';
-            }
-          } else {
-            // Same-origin fallback
-            socketUrl = '';
-            socketPath = '/scheduler/socket.io';
+          // Allow disabling sockets if proxy is unavailable
+          const pref = localStorage.getItem('socket_transport');
+          if (pref === 'disabled') {
+            return; // Skip creating socket
           }
+          // ⚠️ CRITICAL: NO PORTS IN URLS - See NO-PORT-RULE.md
+          // Use relative URL - let IIS web.config handle proxying to Node.js backend
+          // IIS proxies /scheduler -> internal port (NO PORTS in client code)
+          // Socket.io should connect through the API proxy
+          const socketUrl = '';  // Same-origin (relative)
+          const socketPath = '/api/socket.io';  // Route through API proxy
 
           const transportPref = (localStorage.getItem('socket_transport') || 'polling');
           const useWebsocket = transportPref === 'websocket';
@@ -199,8 +197,9 @@ function App() {
             path: socketPath,
             transports: useWebsocket ? ['websocket', 'polling'] : ['polling'],
             upgrade: useWebsocket,
-            reconnectionAttempts: 5,
+            reconnectionAttempts: 2,
             reconnectionDelay: 1000,
+            timeout: 4000
           });
 
           newSocket.on('connect', () => {
@@ -213,6 +212,19 @@ function App() {
 
           newSocket.on('error', (error) => {
             console.error('Socket error:', error);
+            try {
+              // If backend proxy is unavailable (e.g., 502/NetworkError), disable further reconnect attempts
+              if (String(error).includes('Network') || String(error).includes('502')) {
+                try { localStorage.setItem('socket_transport', 'disabled'); } catch (_) {
+                  // Ignore storage errors
+                }
+                try { newSocket.disconnect(); } catch (_) {
+                  // Ignore disconnect errors
+                }
+              }
+            } catch (_) {
+              // Ignore any other errors
+            }
           });
 
           // Track this specific socket for cleanup
@@ -319,4 +331,3 @@ function App() {
 }
 
 export default App;
-

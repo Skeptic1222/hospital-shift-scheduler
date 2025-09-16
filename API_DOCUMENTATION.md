@@ -1,15 +1,15 @@
 # Hospital Shift Scheduler API Documentation
 
-Status: This API supports both live and demo/offline modes. When `SKIP_EXTERNALS=true`, database, Redis, and third‑party integrations are skipped and many endpoints return realistic demo data. Authentication in the current build verifies Google ID tokens (server‑side tokeninfo). Auth0 scaffolding exists but is not wired into `server.js` yet.
+Status: This API runs against live dependencies (SQL Server, Redis). No demo/offline mode is supported. Authentication in the current build verifies Google ID tokens (server‑side tokeninfo). Auth0 scaffolding exists but is not wired into `server.js` yet.
 
 ## Base URL
 ```
 Production (behind IIS): https://<host>/scheduler/api
-Development (Node directly): http://localhost:3001/api
+Development (IIS proxy): http://localhost/scheduler/api
 ```
 
 ## Authentication
-All API requests require authentication via a JWT Bearer token. In the current server build, Google ID tokens are verified against `https://oauth2.googleapis.com/tokeninfo` with `GOOGLE_CLIENT_ID`/`REACT_APP_GOOGLE_CLIENT_ID` as the expected audience. In demo/dev, local tokens may be accepted for admin/supervisor role elevation based on `ADMIN_EMAILS`/`SUPERVISOR_EMAILS`.
+All API requests require authentication via a JWT Bearer token. In the current server build, Google ID tokens are verified against `https://oauth2.googleapis.com/tokeninfo` with `GOOGLE_CLIENT_ID`/`REACT_APP_GOOGLE_CLIENT_ID` as the expected audience. 
 
 ### Headers
 ```http
@@ -78,6 +78,23 @@ Returns 501 in current build. Use Google Sign‑In on the client to obtain an ID
   "success": true
 }
 ```
+
+### Admin Users
+
+#### GET /api/admin/users
+List users with roles.
+
+#### POST /api/admin/users
+Create a user. Body includes `email`, `first_name`, `last_name`, and optional `role` and `department_id`.
+
+#### PUT /api/admin/users/:id
+Update user fields (e.g., `first_name`, `last_name`, `role`, `department_id`, `is_active`).
+
+#### DELETE /api/admin/users/:id
+Delete or deactivate a user.
+
+#### POST /api/admin/users/assign-role
+Assign or update a user’s role by email.
 
 ### Shifts
 
@@ -277,7 +294,7 @@ Mark notification as read.
 ```
 
 #### POST /api/notifications/subscribe (planned)
-Subscription storage endpoint is not present yet; push is mocked in demo mode.
+Subscription storage endpoint persists push subscriptions.
 Subscribe to push notifications.
 
 ```javascript
@@ -461,14 +478,20 @@ Generate reports.
 }
 ```
 
+### Database Health
+
+#### GET /api/db/health
+Returns database connectivity status: `{ healthy: boolean }` and error if unavailable.
+
 ### WebSocket Events
 
 Connect to WebSocket for real-time updates:
 ```javascript
-const socket = io('https://<host>/scheduler', {
-  path: '/scheduler/socket.io',
+// Same-origin connection behind IIS; path is proxied to the API service
+const socket = io('', {
+  path: '/api/socket.io',
   auth: { token: 'Bearer <token>' },
-  transports: ['polling'] // required behind IIS
+  transports: ['polling'] // polling is safest behind IIS
 });
 
 // Listen for events

@@ -1,13 +1,13 @@
 const express = require('express');
 
-module.exports = function createAdminRouter({ googleAuth, repositories, db, demo, validate, body, isDemo, setDemoOverride }) {
+module.exports = function createAdminRouter({ googleAuth, repositories, db, validate, body, cacheService }) {
   const router = express.Router();
 
   // List roles
   router.get('/admin/roles', googleAuth.authenticate(), googleAuth.authorize(['admin']), async (req, res) => {
     try {
-      if (process.env.SKIP_EXTERNALS === 'true' || !db.connected) {
-        return res.json({ roles: [ { name: 'admin' }, { name: 'supervisor' }, { name: 'user' } ] });
+      if (!db.connected) {
+        return res.status(503).json({ error: 'Database unavailable' });
       }
       const rs = await db.query("SELECT name FROM scheduler.roles ORDER BY name");
       return res.json({ roles: rs.recordset || [] });
@@ -17,8 +17,8 @@ module.exports = function createAdminRouter({ googleAuth, repositories, db, demo
   // Seed default roles
   router.post('/admin/roles/seed', googleAuth.authenticate(), googleAuth.authorize(['admin']), async (req, res) => {
     try {
-      if (process.env.SKIP_EXTERNALS === 'true' || !db.connected) {
-        return res.json({ seeded: true });
+      if (!db.connected) {
+        return res.status(503).json({ error: 'Database unavailable' });
       }
       const hospitalId = req.body?.hospital_id || null;
       const roles = ['admin','supervisor','user'];
@@ -44,20 +44,8 @@ module.exports = function createAdminRouter({ googleAuth, repositories, db, demo
     async (req, res) => {
       try {
         const { email, roleName, hospital_id } = req.body || {};
-        if (process.env.SKIP_EXTERNALS === 'true' || !db.connected) {
-          try { demo.ensureSeeded(); } catch (_) {}
-          try {
-            const r = demo.upsertStaff({
-              email,
-              first_name: req.body.first_name || req.body.firstName,
-              last_name: req.body.last_name || req.body.lastName,
-              department_code: req.body.department_code,
-              roleName
-            });
-            return res.json({ updated: true, upserted: r.upserted, user: r.user });
-          } catch (_) {
-            return res.json({ updated: true, upserted: true });
-          }
+        if (!db.connected) {
+          return res.status(503).json({ error: 'Database unavailable' });
         }
         const roleRs = await db.query("SELECT TOP 1 id FROM scheduler.roles WHERE name=@name AND (@hid IS NULL OR hospital_id=@hid)", { name: roleName, hid: hospital_id || null });
         if (!roleRs.recordset || roleRs.recordset.length === 0) return res.status(404).json({ error: 'Role not found' });
@@ -89,52 +77,126 @@ module.exports = function createAdminRouter({ googleAuth, repositories, db, demo
     }
   );
 
-  // Demo seeds
-  router.post('/seed/radtechs', googleAuth.authenticate(), googleAuth.authorize(['admin']), async (req, res) => {
+
+  // Status endpoint - requires authentication
+  router.get('/admin/status', 
+    googleAuth.authenticate(), 
+    googleAuth.authorize(['admin', 'supervisor']),
+    async (req, res) => {
     try {
-      if (process.env.SKIP_EXTERNALS === 'true') {
-        const count = parseInt(req.body?.count) || 20;
-        const staff = demo.seedStaff(count);
-        return res.json({ seeded: staff.length });
+      // Check database connection status
+      let dbConnected = false;
+      let dbHealth = null;
+      
+      if (db) {
+        // Check if database has a connection
+        if (db.connected === true) {
+          dbConnected = true;
+          dbHealth = { healthy: true, mode: 'connected' };
+        } else {
+          dbConnected = false;
+          dbHealth = { healthy: false, error: 'Not connected' };
+        }
+      } else {
+        dbConnected = false;
+        dbHealth = { healthy: false, error: 'Database not configured' };
       }
-      return res.status(501).json({ error: 'Not Implemented' });
-    } catch (e) { return res.status(500).json({ error: 'Failed to seed' }); }
+      
+      res.json({ 
+        database_connected: dbConnected,
+        database_health: dbHealth,
+        timestamp: new Date().toISOString()
+      });
+    } catch (e) {
+      console.error('Status check error:', e);
+      res.status(500).json({ error: 'Failed to check status' });
+    }
   });
 
-  router.post('/seed/shifts', googleAuth.authenticate(), googleAuth.authorize(['admin']), async (req, res) => {
-    try {
-      if (process.env.SKIP_EXTERNALS === 'true') {
-        const count = parseInt(req.body?.count) || 40;
-        const seeded = demo.seedShifts(count);
-        return res.json({ seeded: seeded.length });
-      }
-      return res.status(501).json({ error: 'Not Implemented' });
-    } catch (e) { return res.status(500).json({ error: 'Failed to seed shifts' }); }
-  });
-
-  // Settings: demo/live toggle
+  // Settings: system status
   router.get('/admin/settings', googleAuth.authenticate(), googleAuth.authorize(['admin']), async (req, res) => {
     try {
-      const envDemo = process.env.SKIP_EXTERNALS === 'true';
-      const current = isDemo && isDemo();
-      const override = (isDemo && isDemo()) !== envDemo;
-      res.json({ demo_mode: current, override, source: override ? 'override' : (envDemo ? 'env:true' : 'env:false') });
-    } catch (e) { res.status(500).json({ error: 'Failed to load settings' }); }
+      // Check database connection status
+      let dbConnected = false;
+      let dbHealth = null;
+      
+      if (db) {
+        // Check if database has a connection and health check method
+        if (db.connected === true) {
+          // Database claims to be connected, verify with health check
+          try {
+            if (typeof db.healthCheck === 'function') {
+              dbHealth = await db.healthCheck();
+              dbConnected = dbHealth && dbHealth.healthy === true;
+            } else {
+              // No healthCheck method, but connected flag is true
+              dbConnected = true;
+              dbHealth = { healthy: true, mode: 'connected' };
+            }
+          } catch (e) {
+            // Health check failed, connection might be stale
+            dbConnected = false;
+            dbHealth = { healthy: false, error: 'Health check failed' };
+          }
+        } else if (db.connected === false) {
+          // Database explicitly not connected
+          dbConnected = false;
+          dbHealth = { healthy: false, error: 'Not connected' };
+        } else {
+          // Database connection status unknown, assume not connected
+          dbConnected = false;
+          dbHealth = { healthy: false, error: 'Connection status unknown' };
+        }
+      } else {
+        dbConnected = false;
+        dbHealth = { healthy: false, error: 'Database not configured' };
+      }
+      
+      // Check Redis availability
+      let redisAvailable = false;
+      try { redisAvailable = cacheService?.client?.status === 'ready'; } catch (_) { redisAvailable = false; }
+
+      // Load persisted admin settings (non-PHI, small config)
+      let adminSettings = {};
+      try {
+        const s = await cacheService.get('system_settings', { userId: 'global' });
+        if (s && typeof s === 'object') adminSettings = s;
+      } catch (_) {}
+      
+      res.json({ 
+        database_connected: dbConnected,
+        database_health: dbHealth,
+        redis_available: redisAvailable,
+        active_sessions: 0, // This would need session tracking
+        maintenance_mode: Boolean(adminSettings.maintenance_mode),
+        allow_registration: Boolean(adminSettings.allow_registration)
+      });
+    } catch (e) { 
+      console.error('Admin settings error:', e);
+      res.status(500).json({ error: 'Failed to load settings' }); 
+    }
   });
 
-  router.put('/admin/settings', googleAuth.authenticate(), googleAuth.authorize(['admin']), validate([
-    body('demo_mode').isBoolean().withMessage('demo_mode must be boolean')
-  ]), async (req, res) => {
+  // Settings: save
+  router.put('/admin/settings', googleAuth.authenticate(), googleAuth.authorize(['admin']), async (req, res) => {
     try {
-      const toDemo = !!req.body.demo_mode;
-      if (setDemoOverride) setDemoOverride(toDemo);
-      // If switching to live and DB not connected, try to connect now
-      if (!toDemo && !db.connected) {
-        try { await db.connect(); } catch (err) { return res.status(500).json({ error: 'DB connect failed', detail: err.message }); }
+      const body = req.body || {};
+      const toSave = {
+        maintenance_mode: Boolean(body.maintenance_mode),
+        allow_registration: Boolean(body.allow_registration)
+      };
+      try {
+        await cacheService.set('system_settings', { userId: 'global' }, toSave, { ttl: 0 });
+      } catch (e) {
+        console.error('Failed to persist admin settings:', e);
+        return res.status(500).json({ error: 'Failed to save settings' });
       }
-      res.json({ ok: true, demo_mode: toDemo });
-    } catch (e) { res.status(500).json({ error: 'Failed to update settings' }); }
+      return res.json({ saved: true, settings: toSave });
+    } catch (e) {
+      return res.status(500).json({ error: 'Failed to save settings' });
+    }
   });
+
 
   return router;
 };
